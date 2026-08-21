@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Majlis Onam Fest - Scratch & Win!</title>
-    
+    <link rel="shortcut icon" href="/scratch-card-demo/assets/png/Vector Smart Object copy 12.png" type="image/png">
     <!-- Google Fonts for Festive Premium Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,6 +53,23 @@
                             </div>
                         </div>
 
+                        <!-- Congratulations Overlay (initially hidden) -->
+                        <div id="congrats-overlay" class="congrats-overlay hidden">
+                            <div class="congrats-overlay-content">
+                                <h2 class="congrats-overlay-title">🎉 CONGRATULATIONS!</h2>
+                                <p class="congrats-overlay-subtitle">You are eligible for an exclusive offer!</p>
+                                <div class="congrats-overlay-offer animate-pulse">20% OFF</div>
+                                <div class="congrats-overlay-coupon">
+                                    <span class="coupon-label">Coupon Code:</span>
+                                    <span class="coupon-code">ONAM20</span>
+                                </div>
+                                <button id="btn-scratch-continue" class="btn btn-primary btn-glow btn-small" style="margin-top: 14px; width: 100%;">
+                                    <span>Claim Your Offer 🎁</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Canvas Layer (Scratchable front) -->
                         <canvas id="scratch-canvas" width="300" height="300"></canvas>
                         
@@ -66,12 +83,7 @@
                     </div>
                     <span id="scratch-progress-text" class="progress-text">Scratch: 0%</span>
                 </div>
-                <div id="scratch-continue-area" class="scratch-progress-container hidden">
-                    <button id="btn-scratch-continue" class="btn btn-primary btn-glow" style="width: 220px; margin-top: 10px;">
-                        <span>Claim Your Offer 🎁</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                    </button>
-                </div>
+                <div id="scratch-continue-area" class="scratch-progress-container hidden"></div>
             </div>
         </section>
 
@@ -147,13 +159,32 @@
                     <div class="input-group">
                         <label for="input-email" class="input-label">Email Address</label>
                         <div class="input-field-wrapper">
-                            <input type="email" id="input-email" class="input-field" placeholder="username@example.com" required>
-                            <span class="error-message" id="error-email">Please enter a valid email address</span>
+                            <input type="email" id="input-email" class="input-field" placeholder="username@example.com (optional)">
+                            <span class="error-message" id="error-email">Please enter a valid email address (optional)</span>
+                        </div>
+                    </div>
+
+                    <!-- Instagram Follow Action Group -->
+                    <div class="input-group instagram-follow-group">
+                        <!-- Initial CTA state -->
+                        <div id="instagram-initial-state" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                            <p class="insta-instruction-text">Follow us on Instagram to claim your offer</p>
+                            <a href="https://www.instagram.com/arabianmajlis_signature/" target="_blank" id="btn-instagram-follow" class="btn btn-instagram">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="btn-icon-left"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                <span>FOLLOW US ON INSTAGRAM</span>
+                            </a>
+                            <span id="instagram-status-text" class="status-helper-text">Instagram step required *</span>
+                        </div>
+                        
+                        <!-- Completed return confirmation state -->
+                        <div id="instagram-success-state" class="hidden" style="width: 100%;">
+                            <h4 class="insta-success-title">Thanks for following us on Instagram! 🎉</h4>
+                            <p class="insta-success-desc">Welcome back! You can now continue to claim your offer.</p>
                         </div>
                     </div>
 
                     <!-- Submit Button with loading state -->
-                    <button type="submit" id="btn-submit-form" class="btn btn-primary">
+                    <button type="submit" id="btn-submit-form" class="btn btn-primary btn-locked" disabled>
                         <span class="btn-text">Claim My 20% OFF Coupon</span>
                         <div class="loader hidden" id="form-loader"></div>
                     </button>
