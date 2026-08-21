@@ -2,6 +2,10 @@
    MAJLIS ONAM PROMOTION - CLIENT LOGIC
    ========================================================================== */
 
+// --- CONFIGURATION SECTION ---
+// Copy the Web App URL from your deployed Google Apps Script and paste it below:
+const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbxh12R_ZP_9oyP8rXT2SB2qhZGgpERhyrquQ6rcb_8rbT6-w8oTh4L0Pl_ecwI64wJH/exec";
+
 document.addEventListener("DOMContentLoaded", () => {
     
     // --- Screen Navigation Elements ---
@@ -27,6 +31,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputEmail = document.getElementById("input-email");
     const btnSubmitForm = document.getElementById("btn-submit-form");
     const formLoader = document.getElementById("form-loader");
+    const btnInstagramFollow = document.getElementById("btn-instagram-follow");
+    const instagramStatusText = document.getElementById("instagram-status-text");
+    const instagramInitialState = document.getElementById("instagram-initial-state");
+    const instagramSuccessState = document.getElementById("instagram-success-state");
 
     // --- Scratch Canvas Elements ---
     const canvas = document.getElementById("scratch-canvas");
@@ -36,6 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const scratchProgressArea = document.getElementById("scratch-progress-area");
     const scratchContinueArea = document.getElementById("scratch-continue-area");
     const btnScratchContinue = document.getElementById("btn-scratch-continue");
+    const congratsOverlay = document.getElementById("congrats-overlay");
 
     // --- State Variables ---
     let isDrawing = false;
@@ -44,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let isRevealed = false;
     let lastPercentCheck = 0;
     let scratchProgress = 0;
+    let isInstagramClicked = false;
 
     // --- Confetti Variables & Setup ---
     const confettiCanvas = document.getElementById("confetti-canvas");
@@ -82,6 +92,12 @@ document.addEventListener("DOMContentLoaded", () => {
         scratchProgressText.innerText = "Scratch: 0%";
         canvas.style.opacity = "1";
         canvas.style.pointerEvents = "auto";
+
+        // Reset congratulations overlay
+        if (congratsOverlay) {
+            congratsOverlay.classList.add("hidden");
+            congratsOverlay.classList.remove("show");
+        }
         
         // Reset progress/continue button visibility
         if (scratchProgressArea && scratchContinueArea) {
@@ -273,16 +289,21 @@ document.addEventListener("DOMContentLoaded", () => {
         // Confetti party
         triggerConfetti();
 
-        // Swap progress bar with continue button for back navigation
-        if (scratchProgressArea && scratchContinueArea) {
+        // Hide progress bar area cleanly when revealed (surrounding layout stays stable)
+        if (scratchProgressArea) {
             scratchProgressArea.classList.add("hidden");
-            scratchContinueArea.classList.remove("hidden");
+        }
+        if (scratchContinueArea) {
+            scratchContinueArea.classList.add("hidden");
         }
 
-        // Transition to Congratulations / Instagram screen after canvas fade out finishes
-        setTimeout(() => {
-            showScreen(screenInstagram);
-        }, 400);
+        // Animate congratulations overlay into view inside the scratch card
+        if (congratsOverlay) {
+            congratsOverlay.classList.remove("hidden");
+            // Force reflow to trigger scale transition animation
+            void congratsOverlay.offsetWidth;
+            congratsOverlay.classList.add("show");
+        }
     }
 
     // Attach Scratch Canvas Event Listeners
@@ -431,6 +452,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function handleFormSubmit(e) {
         e.preventDefault();
+        
+        // Block submission if Instagram button was not clicked
+        if (!isInstagramClicked) {
+            showToast("Please follow us on Instagram to claim your offer.");
+            return;
+        }
+
         let isValid = true;
 
         // Validate Name
@@ -450,9 +478,9 @@ document.addEventListener("DOMContentLoaded", () => {
             inputMobile.classList.remove("invalid");
         }
 
-        // Validate Email
+        // Validate Email (Optional)
         const emailVal = inputEmail.value.trim();
-        if (!validateEmail(emailVal)) {
+        if (emailVal !== "" && !validateEmail(emailVal)) {
             inputEmail.classList.add("invalid");
             isValid = false;
         } else {
@@ -464,37 +492,72 @@ document.addEventListener("DOMContentLoaded", () => {
         // If Valid, Enter Loading State
         btnSubmitForm.disabled = true;
         const btnText = btnSubmitForm.querySelector(".btn-text");
-        btnText.innerText = "Verifying Details...";
+        btnText.innerText = "Submitting...";
         formLoader.classList.remove("hidden");
 
-        // Simulate API network latency of 1200ms
-        setTimeout(() => {
-            // Save temporary data in local memory object for demo verification
-            const demoUserData = {
-                name: inputName.value.trim(),
-                mobile: inputMobile.value.trim(),
-                email: inputEmail.value.trim(),
-                claimedOffer: "20% OFF",
-                couponCode: "ONAM20",
-                timestamp: new Date().toISOString()
-            };
+        // Dynamically get the offer and coupon code from the UI
+        const overlayOfferEl = document.querySelector(".congrats-overlay-offer");
+        const overlayCouponEl = document.querySelector(".congrats-overlay-coupon .coupon-code");
+        
+        const offerVal = overlayOfferEl ? overlayOfferEl.innerText.trim() : "20% OFF";
+        const couponVal = overlayCouponEl ? overlayCouponEl.innerText.trim() : "ONAM20";
 
-            // Log details cleanly to console to show backend ready hookups
-            console.log("=== NEW DEMO PROMO CLAIM SUBMISSION ===");
-            console.table(demoUserData);
-            console.log("======================================");
+        const claimPayload = {
+            fullName: inputName.value.trim(),
+            mobile: inputMobile.value.trim(),
+            mobileNumber: inputMobile.value.trim(), // Defensively send both mobile and mobileNumber
+            email: inputEmail.value.trim(),
+            offer: offerVal,
+            couponCode: couponVal
+        };
 
-            // Turn off loader state
+        // Fallback simulation check if URL is the default placeholder (for local test safety)
+        if (GOOGLE_SHEETS_API_URL === "PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE" || !GOOGLE_SHEETS_API_URL.startsWith("http")) {
+            console.warn("GOOGLE_SHEETS_API_URL is placeholder or invalid. Simulating API submission success for local testing.");
+            setTimeout(() => {
+                btnSubmitForm.disabled = false;
+                btnText.innerText = "Claim My 20% OFF Coupon";
+                formLoader.classList.add("hidden");
+                showScreen(screenSuccess);
+                triggerConfetti();
+            }, 1200);
+            return;
+        }
+
+        // Real Google Apps Script Web App request
+        fetch(GOOGLE_SHEETS_API_URL, {
+            method: "POST",
+            body: JSON.stringify(claimPayload)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return response.json();
+        })
+        .then(data => {
             btnSubmitForm.disabled = false;
             btnText.innerText = "Claim My 20% OFF Coupon";
             formLoader.classList.add("hidden");
 
-            // Transition to success screen
-            showScreen(screenSuccess);
+            if (data && data.success) {
+                // Transition to success screen
+                showScreen(screenSuccess);
+                triggerConfetti();
+            } else {
+                throw new Error(data ? data.error || "Submission unsuccessful status" : "Invalid response");
+            }
+        })
+        .catch(err => {
+            console.error("Submission error:", err);
             
-            // Fire another minor confetti popper on success!
-            triggerConfetti();
-        }, 1200);
+            btnSubmitForm.disabled = false;
+            btnText.innerText = "Claim My 20% OFF Coupon";
+            formLoader.classList.add("hidden");
+
+            // Display error toast warning using our custom toast utility
+            showToast("Failed to save details. Please check your connection and try again.");
+        });
     }
 
     customerForm.addEventListener("submit", handleFormSubmit);
@@ -589,17 +652,38 @@ document.addEventListener("DOMContentLoaded", () => {
         showScreen(screenForm);
     });
 
+    // Instagram Follow Button Listener
+    if (btnInstagramFollow) {
+        btnInstagramFollow.addEventListener("click", () => {
+            isInstagramClicked = true;
+            
+            // Enable the submit button
+            if (btnSubmitForm) {
+                btnSubmitForm.disabled = false;
+                btnSubmitForm.classList.remove("btn-locked");
+            }
+            
+            // Hide initial state and show success welcome state
+            if (instagramInitialState) {
+                instagramInitialState.classList.add("hidden");
+            }
+            if (instagramSuccessState) {
+                instagramSuccessState.classList.remove("hidden");
+            }
+        });
+    }
+
     // Back Navigation button listeners
     btnBackToScratch.addEventListener("click", () => {
         showScreen(screenScratch);
     });
 
     btnBackToInstagram.addEventListener("click", () => {
-        showScreen(screenInstagram);
+        showScreen(screenScratch);
     });
 
     btnScratchContinue.addEventListener("click", () => {
-        showScreen(screenInstagram);
+        showScreen(screenForm);
     });
 
     // Reset Campaign Flow
@@ -609,6 +693,23 @@ document.addEventListener("DOMContentLoaded", () => {
         [inputName, inputMobile, inputEmail].forEach(input => {
             input.classList.remove("invalid");
         });
+
+        // Reset Instagram Follow state
+        isInstagramClicked = false;
+        if (btnSubmitForm) {
+            btnSubmitForm.disabled = true;
+            btnSubmitForm.classList.add("btn-locked");
+        }
+        if (instagramInitialState) {
+            instagramInitialState.classList.remove("hidden");
+        }
+        if (instagramSuccessState) {
+            instagramSuccessState.classList.add("hidden");
+        }
+        if (instagramStatusText) {
+            instagramStatusText.innerText = "Instagram step required *";
+            instagramStatusText.classList.remove("verified");
+        }
 
         // Go back to scratch card screen directly
         showScreen(screenScratch);
