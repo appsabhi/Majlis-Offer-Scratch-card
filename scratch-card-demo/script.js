@@ -454,10 +454,10 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         
         // Block submission if Instagram button was not clicked
-        if (!isInstagramClicked) {
-            showToast("Please follow us on Instagram to claim your offer.");
-            return;
-        }
+        // if (!isInstagramClicked) {
+        //     showToast("Please follow us on Instagram to claim your offer.");
+        //     return;
+        // }
 
         let isValid = true;
 
