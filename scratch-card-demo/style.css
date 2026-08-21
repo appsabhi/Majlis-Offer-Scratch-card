@@ -944,5 +944,192 @@ body {
     flex-shrink: 0;
 }
 
+/* ==================== SCREEN: CONGRATULATIONS OVERLAY (IN-CARD) ==================== */
+.congrats-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(251, 249, 244, 0.94); /* matches --bg-cream with high opacity */
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    padding: 16px;
+    box-sizing: border-box;
+    border-radius: 12px;
+    opacity: 0;
+    transform: scale(0.9);
+    transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+}
+
+.congrats-overlay.show {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+.congrats-overlay-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.congrats-overlay-title {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
+    background: linear-gradient(135deg, #e65c00 0%, #f9d423 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+}
+
+.congrats-overlay-subtitle {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.congrats-overlay-offer {
+    font-family: var(--font-heading);
+    font-size: 34px;
+    font-weight: 850;
+    color: #e65c00;
+    line-height: 1;
+    margin-bottom: 8px;
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.05);
+}
+
+.congrats-overlay-coupon {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 12px;
+}
+
+.congrats-overlay-coupon .coupon-label {
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+}
+
+.congrats-overlay-coupon .coupon-code {
+    font-family: var(--font-heading);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-dark);
+    background: rgba(212,175,55,0.15);
+    border: 1px dashed var(--festive-gold);
+    padding: 3px 10px;
+    border-radius: 6px;
+}
+
+.btn-small {
+    padding: 10px 16px !important;
+    font-size: 12px !important;
+    border-radius: 10px !important;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Instagram follow section in form */
+.instagram-follow-group {
+    background: rgba(212, 175, 55, 0.05);
+    border: 1.5px dashed var(--festive-gold);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 6px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px !important;
+}
+
+.insta-instruction-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+#btn-instagram-follow {
+    background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%) !important;
+    color: var(--white) !important;
+    border: none !important;
+    font-size: 12px !important;
+    padding: 10px 18px !important;
+    border-radius: 10px !important;
+    width: auto !important;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(214, 36, 159, 0.2);
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#btn-instagram-follow:hover {
+    background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%) !important;
+    color: var(--white) !important;
+    opacity: 1 !important;
+    filter: brightness(1.08) !important;
+    transform: translateY(-1px) scale(1.02) !important;
+    box-shadow: 0 6px 16px rgba(214, 36, 159, 0.35) !important;
+}
+
+.status-helper-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--error);
+}
+
+.status-helper-text.verified {
+    color: var(--success);
+}
+
+/* Instagram follow success state styling */
+#instagram-success-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    padding: 6px 0;
+    animation: fadeIn 0.4s ease-out forwards;
+}
+
+.insta-success-title {
+    font-family: var(--font-heading);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.insta-success-desc {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+
 
 
