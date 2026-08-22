@@ -6,6 +6,214 @@
 // Copy the Web App URL from your deployed Google Apps Script and paste it below:
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbxh12R_ZP_9oyP8rXT2SB2qhZGgpERhyrquQ6rcb_8rbT6-w8oTh4L0Pl_ecwI64wJH/exec";
 
+// ==========================================================================
+// REWARD POOL CONFIGURATION
+// Add, remove, or edit offers here. Each entry must have:
+//   label      — Display text shown in the scratch reveal and all UI elements
+//   coupon     — Coupon code string. Set to null for non-winning outcomes.
+//   isWinner   — true if this is a real prize; false for "Better Luck" outcomes
+// ==========================================================================
+const REWARD_POOL = [
+    { id: "offer20",      label: "20% OFF",              coupon: "ONAM20",   isWinner: true  },
+    { id: "offer15",      label: "15% OFF",              coupon: "ONAM15",   isWinner: true  },
+    { id: "offer10",      label: "10% OFF",              coupon: "ONAM10",   isWinner: true  },
+    { id: "offerDessert", label: "Free Dessert",         coupon: "ONAMDESS", isWinner: true  },
+    { id: "betterLuck",   label: "Better Luck Next Time",coupon: null,       isWinner: false }
+];
+
+// Holds the ONE reward assigned for this session. Set once on page load.
+let sessionReward = null;
+
+const VISITOR_KEY = "majlis_campaign_visitor_id";
+const DEV_MODE = true;
+
+let visitorId = null;
+
+/**
+ * Generates a stable unique anonymous visitor/session identifier.
+ */
+function generateVisitorId() {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
+    for (let i = 0; i < 16; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+/**
+ * Helper to get the reward storage key for the current visitor.
+ */
+function getRewardStorageKey() {
+    return `majlis_campaign_reward_id_${visitorId || "fallback"}`;
+}
+
+/**
+ * Helper to get the scratch revealed storage key for the current visitor.
+ */
+function getRevealedStorageKey() {
+    return `majlis_campaign_scratch_revealed_${visitorId || "fallback"}`;
+}
+
+/**
+ * Helper to get the claimed storage key for the current visitor.
+ */
+function getClaimedStorageKey() {
+    return `majlis_campaign_claimed_${visitorId || "fallback"}`;
+}
+
+/**
+ * Checks whether the visitor has successfully claimed.
+ */
+function isClaimedState() {
+    try {
+        return localStorage.getItem(getClaimedStorageKey()) === "true";
+    } catch (e) {
+        console.warn("[Majlis] Error reading claimed state:", e);
+        return false;
+    }
+}
+
+/**
+ * Persists the successfully claimed state for the visitor.
+ */
+function setClaimedState() {
+    try {
+        localStorage.setItem(getClaimedStorageKey(), "true");
+        console.log("[Majlis] Persisted claimed success state for visitor:", visitorId);
+    } catch (e) {
+        console.warn("[Majlis] Error persisting claimed state:", e);
+    }
+}
+
+/**
+ * Checks persistent storage for an already assigned reward.
+ * Restores it if found; otherwise, randomly selects one, saves it, and uses it.
+ * Ensures Math.random() is only run once on the very first visit.
+ */
+function initializeReward() {
+    // 1. Resolve or generate visitorId
+    try {
+        visitorId = localStorage.getItem(VISITOR_KEY);
+        if (!visitorId) {
+            visitorId = generateVisitorId();
+            localStorage.setItem(VISITOR_KEY, visitorId);
+            console.log("[Majlis] Generated new visitor identity:", visitorId);
+        } else {
+            console.log("[Majlis] Restored existing visitor identity:", visitorId);
+        }
+    } catch (e) {
+        console.warn("[Majlis] Error accessing localStorage for visitor identity:", e);
+        if (!visitorId) visitorId = "fallback";
+    }
+
+    const rewardKey = getRewardStorageKey();
+
+    // 2. Resolve or generate reward for this visitorId
+    try {
+        const savedId = localStorage.getItem(rewardKey);
+        if (savedId) {
+            const found = REWARD_POOL.find(item => item.id === savedId);
+            if (found) {
+                sessionReward = found;
+                console.log("[Majlis] Restored existing reward for visitor:", sessionReward.label, "| ID:", sessionReward.id);
+                return;
+            }
+        }
+    } catch (e) {
+        console.warn("[Majlis] Error accessing localStorage for reward:", e);
+    }
+
+    // No existing reward, select a new one randomly
+    const idx = Math.floor(Math.random() * REWARD_POOL.length);
+    sessionReward = REWARD_POOL[idx];
+    console.log("[Majlis] Selected new reward randomly for visitor:", sessionReward.label, "| ID:", sessionReward.id);
+
+    try {
+        localStorage.setItem(rewardKey, sessionReward.id);
+    } catch (e) {
+        console.warn("[Majlis] Error saving reward to localStorage:", e);
+    }
+}
+
+/**
+ * Writes the assigned sessionReward into every DOM element that
+ * displays the offer label or coupon code.
+ * Must be called ONCE after selectSessionReward(), before any user interaction.
+ */
+function applyRewardToDOM() {
+    const r = sessionReward;
+
+    // ---- Offer label elements (always updated) ----
+    // Reveal layer inside scratch card
+    const offerAmountEl       = document.querySelector(".offer-amount");
+    // Congrats overlay (inside scratch card, appears after reveal)
+    const overlayOfferEl      = document.querySelector(".congrats-overlay-offer");
+    // Screen 2 congratulations section
+    const congratsOfferAmtEl  = document.querySelector(".congrats-offer-amount");
+    // Success ticket screen
+    const ticketPercentEl     = document.querySelector(".ticket-percent");
+    // Form submit button text
+    const btnSubmitTextEl     = document.querySelector("#btn-submit-form .btn-text");
+
+    if (offerAmountEl)       offerAmountEl.innerText       = r.label;
+    if (overlayOfferEl)      overlayOfferEl.innerText      = r.label;
+    if (congratsOfferAmtEl)  congratsOfferAmtEl.innerText  = r.label;
+    if (ticketPercentEl)     ticketPercentEl.innerText     = r.label;
+    if (btnSubmitTextEl)     btnSubmitTextEl.innerText     = r.isWinner
+        ? "CLAIM MY " + r.label.toUpperCase()
+        : "SUBMIT DETAILS";
+
+    // Reveal layer headers & badge
+    const offerCongratsEl     = document.getElementById("offer-congrats");
+    const offerDescEl         = document.querySelector(".offer-reveal-layer .offer-desc");
+    const offerBadgeEl        = document.querySelector(".offer-reveal-layer .offer-badge");
+
+    if (r.isWinner) {
+        if (offerCongratsEl) offerCongratsEl.style.display = "";
+        if (offerDescEl)     offerDescEl.style.display     = "";
+        if (offerBadgeEl)    offerBadgeEl.style.display    = "";
+    } else {
+        if (offerCongratsEl) offerCongratsEl.style.display = "none";
+        if (offerDescEl)     offerDescEl.style.display     = "none";
+        if (offerBadgeEl)    offerBadgeEl.style.display    = "none";
+    }
+
+    // ---- Coupon code elements ----
+    // Reveal layer coupon
+    const revealCouponParent  = document.querySelector(".offer-reveal-layer .revealed-coupon");
+    const revealCouponCode    = document.querySelector(".offer-reveal-layer .coupon-code");
+    // Overlay coupon (inside congrats overlay)
+    const overlayCouponParent = document.querySelector(".congrats-overlay-coupon");
+    const overlayCouponCode   = document.querySelector(".congrats-overlay-coupon .coupon-code");
+    // Screen 2 coupon
+    const congratsCouponParent= document.querySelector(".congrats-coupon");
+    const congratsCouponCode  = document.querySelector(".congrats-coupon .coupon-code");
+    // Success screen coupon
+    const successCouponCode   = document.getElementById("success-coupon-code");
+    const ticketCouponBox     = document.querySelector(".ticket-coupon-box");
+
+    if (r.isWinner && r.coupon) {
+        // Winner: show all coupon elements with the correct code
+        if (revealCouponParent)   revealCouponParent.style.display   = "";
+        if (revealCouponCode)     revealCouponCode.innerText         = r.coupon;
+        if (overlayCouponParent)  overlayCouponParent.style.display  = "";
+        if (overlayCouponCode)    overlayCouponCode.innerText        = r.coupon;
+        if (congratsCouponParent) congratsCouponParent.style.display = "";
+        if (congratsCouponCode)   congratsCouponCode.innerText       = r.coupon;
+        if (successCouponCode)    successCouponCode.innerText        = r.coupon;
+        if (ticketCouponBox)      ticketCouponBox.style.display      = "";
+    } else {
+        // Non-winner (Better Luck Next Time): hide coupon sections gracefully
+        if (revealCouponParent)   revealCouponParent.style.display   = "none";
+        if (overlayCouponParent)  overlayCouponParent.style.display  = "none";
+        if (congratsCouponParent) congratsCouponParent.style.display = "none";
+        if (ticketCouponBox)      ticketCouponBox.style.display      = "none";
+        // Clear the success code element so copy button copies empty string
+        if (successCouponCode)    successCouponCode.innerText        = "";
+    }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     
     // --- Screen Navigation Elements ---
@@ -85,6 +293,40 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. CANVAS SCRATCH CARD LOGIC
     // ==========================================================================
     function initScratchCanvas() {
+        // Check if already revealed in persistent storage
+        let savedRevealed = false;
+        try {
+            savedRevealed = localStorage.getItem(getRevealedStorageKey()) === "true";
+        } catch (e) {
+            console.warn(e);
+        }
+
+        if (savedRevealed) {
+            isRevealed = true;
+            scratchProgress = 100;
+            progressBarFill.style.width = "100%";
+            scratchProgressText.innerText = sessionReward.isWinner ? "Revealed! 🎉" : "Revealed! 🍀";
+            canvas.style.opacity = "0";
+            canvas.style.pointerEvents = "none";
+            
+            if (congratsOverlay) {
+                if (sessionReward.isWinner) {
+                    congratsOverlay.classList.remove("hidden");
+                    congratsOverlay.classList.add("show");
+                } else {
+                    congratsOverlay.classList.add("hidden");
+                    congratsOverlay.classList.remove("show");
+                }
+            }
+            if (scratchProgressArea) {
+                scratchProgressArea.classList.add("hidden");
+            }
+            if (scratchContinueArea) {
+                scratchContinueArea.classList.add("hidden");
+            }
+            return;
+        }
+
         // Reset properties
         isRevealed = false;
         scratchProgress = 0;
@@ -117,65 +359,67 @@ document.addEventListener("DOMContentLoaded", () => {
     function drawScratchCover() {
         ctx.save();
         
-        // A premium metallic silver/gold gradient
+        // Premium Arabian green gradient
         const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        grad.addColorStop(0, '#d1d1d1'); // Silver base
-        grad.addColorStop(0.3, '#f5f5f5'); // Shiny metallic highlight
-        grad.addColorStop(0.5, '#b5b5b5'); // Dark shadow
-        grad.addColorStop(0.7, '#e6c66c'); // Subtle golden festive tint
-        grad.addColorStop(1, '#9e9e9e'); // Base finish
+        grad.addColorStop(0, '#073520'); // Deep forest green
+        grad.addColorStop(0.5, '#0c472d'); // Rich mid green
+        grad.addColorStop(1, '#052a19'); // Dark shadow green
         
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Add subtle traditional Onam Pookalam floral circles overlay (pure canvas vectors)
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-        ctx.lineWidth = 2;
-        
-        // Draw decorative flower pattern in the center
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
+
+        // Draw elegant concentric Arabian diamond patterns
+        ctx.strokeStyle = "rgba(197, 160, 89, 0.15)";
+        ctx.lineWidth = 1.5;
+        for (let r = 20; r <= 100; r += 20) {
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY - r);
+            ctx.lineTo(centerX + r, centerY);
+            ctx.lineTo(centerX, centerY + r);
+            ctx.lineTo(centerX - r, centerY);
+            ctx.closePath();
+            ctx.stroke();
+        }
         
-        // Outer concentric circles
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 80, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 50, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // Petal lines radiating from center
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
-        for (let i = 0; i < 12; i++) {
-            const angle = (i * Math.PI) / 6;
+        // Draw elegant radiating geometric lines
+        ctx.strokeStyle = "rgba(197, 160, 89, 0.08)";
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 8; i++) {
+            const angle = (i * Math.PI) / 4;
             ctx.beginPath();
             ctx.moveTo(centerX, centerY);
             ctx.lineTo(
-                centerX + Math.cos(angle) * 110,
-                centerY + Math.sin(angle) * 110
+                centerX + Math.cos(angle) * 120,
+                centerY + Math.sin(angle) * 120
             );
             ctx.stroke();
         }
 
-        // Draw gold inner frame border
-        ctx.strokeStyle = "rgba(212, 175, 55, 0.4)";
-        ctx.lineWidth = 8;
-        ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+        // Draw elegant gold double frame border
+        ctx.strokeStyle = "rgba(197, 160, 89, 0.4)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+
+        ctx.strokeStyle = "rgba(197, 160, 89, 0.2)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24);
 
         // Scratch Text Label
-        ctx.fillStyle = "#3a2212"; // Deep brown text for legibility
-        ctx.font = "bold 20px 'Outfit', sans-serif";
+        ctx.fillStyle = "#faf7f2"; // Cream white text
+        ctx.font = "600 14px 'Poppins', sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         
         // Text drop shadow (canvas style)
-        ctx.shadowColor = "rgba(255, 255, 255, 0.6)";
+        ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
         ctx.shadowBlur = 4;
         ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 1;
+        ctx.shadowOffsetY = 1.5;
         
-        ctx.fillText("SCRATCH HERE 🎁", centerX, centerY);
+        ctx.fillText("SCRATCH TO REVEAL 👆", centerX, centerY);
         
         ctx.restore();
     }
@@ -279,15 +523,24 @@ document.addEventListener("DOMContentLoaded", () => {
         isDrawing = false;
         
         progressBarFill.style.width = "100%";
-        scratchProgressText.innerText = "Revealed! 🎉";
+        scratchProgressText.innerText = sessionReward.isWinner ? "Revealed! 🎉" : "Revealed! 🍀";
+
+        // Save scratch revealed state to localStorage
+        try {
+            localStorage.setItem(getRevealedStorageKey(), "true");
+        } catch (e) {
+            console.warn(e);
+        }
 
         // Smooth fade out animation for the canvas layer
         canvas.style.transition = "opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1)";
         canvas.style.opacity = "0";
         canvas.style.pointerEvents = "none";
 
-        // Confetti party
-        triggerConfetti();
+        // Confetti party only for winners
+        if (sessionReward.isWinner) {
+            triggerConfetti();
+        }
 
         // Hide progress bar area cleanly when revealed (surrounding layout stays stable)
         if (scratchProgressArea) {
@@ -297,12 +550,18 @@ document.addEventListener("DOMContentLoaded", () => {
             scratchContinueArea.classList.add("hidden");
         }
 
-        // Animate congratulations overlay into view inside the scratch card
-        if (congratsOverlay) {
+        // Animate congratulations overlay into view inside the scratch card only for winners
+        if (sessionReward.isWinner && congratsOverlay) {
             congratsOverlay.classList.remove("hidden");
             // Force reflow to trigger scale transition animation
             void congratsOverlay.offsetWidth;
             congratsOverlay.classList.add("show");
+        }
+
+        // Enable the form submit button if winner
+        if (sessionReward.isWinner && btnSubmitForm) {
+            btnSubmitForm.disabled = false;
+            btnSubmitForm.classList.remove("btn-locked");
         }
     }
 
@@ -453,11 +712,11 @@ document.addEventListener("DOMContentLoaded", () => {
     function handleFormSubmit(e) {
         e.preventDefault();
         
-        // Block submission if Instagram button was not clicked
-        // if (!isInstagramClicked) {
-        //     showToast("Please follow us on Instagram to claim your offer.");
-        //     return;
-        // }
+        // Use the session reward directly — single source of truth, never re-reads DOM
+        const offerVal  = sessionReward ? sessionReward.label  : "Unknown";
+        const couponVal = sessionReward ? (sessionReward.coupon || "") : "";
+        
+        const dynamicBtnText = "CLAIM MY " + offerVal.toUpperCase();
 
         let isValid = true;
 
@@ -495,13 +754,6 @@ document.addEventListener("DOMContentLoaded", () => {
         btnText.innerText = "Submitting...";
         formLoader.classList.remove("hidden");
 
-        // Dynamically get the offer and coupon code from the UI
-        const overlayOfferEl = document.querySelector(".congrats-overlay-offer");
-        const overlayCouponEl = document.querySelector(".congrats-overlay-coupon .coupon-code");
-        
-        const offerVal = overlayOfferEl ? overlayOfferEl.innerText.trim() : "20% OFF";
-        const couponVal = overlayCouponEl ? overlayCouponEl.innerText.trim() : "ONAM20";
-
         const claimPayload = {
             fullName: inputName.value.trim(),
             mobile: inputMobile.value.trim(),
@@ -516,8 +768,10 @@ document.addEventListener("DOMContentLoaded", () => {
             console.warn("GOOGLE_SHEETS_API_URL is placeholder or invalid. Simulating API submission success for local testing.");
             setTimeout(() => {
                 btnSubmitForm.disabled = false;
-                btnText.innerText = "Claim My 20% OFF Coupon";
+                btnText.innerText = dynamicBtnText;
                 formLoader.classList.add("hidden");
+                // Persist successfully claimed state
+                setClaimedState();
                 showScreen(screenSuccess);
                 triggerConfetti();
             }, 1200);
@@ -537,10 +791,12 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(data => {
             btnSubmitForm.disabled = false;
-            btnText.innerText = "Claim My 20% OFF Coupon";
+            btnText.innerText = dynamicBtnText;
             formLoader.classList.add("hidden");
 
             if (data && data.success) {
+                // Persist successfully claimed state
+                setClaimedState();
                 // Transition to success screen
                 showScreen(screenSuccess);
                 triggerConfetti();
@@ -552,7 +808,7 @@ document.addEventListener("DOMContentLoaded", () => {
             console.error("Submission error:", err);
             
             btnSubmitForm.disabled = false;
-            btnText.innerText = "Claim My 20% OFF Coupon";
+            btnText.innerText = dynamicBtnText;
             formLoader.classList.add("hidden");
 
             // Display error toast warning using our custom toast utility
@@ -678,9 +934,11 @@ document.addEventListener("DOMContentLoaded", () => {
         showScreen(screenScratch);
     });
 
-    btnBackToInstagram.addEventListener("click", () => {
-        showScreen(screenScratch);
-    });
+    if (btnBackToInstagram) {
+        btnBackToInstagram.addEventListener("click", () => {
+            showScreen(screenScratch);
+        });
+    }
 
     btnScratchContinue.addEventListener("click", () => {
         showScreen(screenForm);
@@ -719,5 +977,127 @@ document.addEventListener("DOMContentLoaded", () => {
     // ==========================================================================
     // 6. INITIALIZE CAMPAIGN APP
     // ==========================================================================
-    initScratchCanvas();
+    // Step 1: Initialize persistent session reward (restores if exists, else generates once)
+    initializeReward();
+    // Step 2: Write that reward into all DOM display elements before any interaction
+    applyRewardToDOM();
+    
+    // Step 3: Determine correct start screen based on claimed status
+    if (isClaimedState()) {
+        console.log("[Majlis] Visitor has already claimed their reward. Restoring Success screen.");
+        showScreen(screenSuccess);
+    } else {
+        // Initialize the scratch canvas normally
+        initScratchCanvas();
+    }
+
+    // Step 3.5: Run form button eligibility check based on restore state
+    const isEligible = isRevealed && sessionReward && sessionReward.isWinner;
+    if (isEligible) {
+        if (btnSubmitForm) {
+            btnSubmitForm.disabled = false;
+            btnSubmitForm.classList.remove("btn-locked");
+        }
+    } else {
+        if (btnSubmitForm) {
+            btnSubmitForm.disabled = true;
+            btnSubmitForm.classList.add("btn-locked");
+        }
+    }
+
+    // Step 4: Remove loading state and show the correct UI
+    const initLoader = document.getElementById("init-loader");
+    if (initLoader) {
+        initLoader.style.transition = "opacity 0.4s ease";
+        initLoader.style.opacity = "0";
+        setTimeout(() => {
+            initLoader.remove();
+        }, 400);
+    }
+
+    // Step 4: Inject Development Reset Control if DEV_MODE is active
+    if (DEV_MODE) {
+        const devBtn = document.createElement("button");
+        devBtn.id = "dev-reset-btn";
+        devBtn.innerText = "DEV: RESET TEST";
+        devBtn.style.position = "fixed";
+        devBtn.style.bottom = "12px";
+        devBtn.style.right = "12px";
+        devBtn.style.zIndex = "99999";
+        devBtn.style.background = "#d32f2f";
+        devBtn.style.color = "#ffffff";
+        devBtn.style.border = "1px solid rgba(255,255,255,0.3)";
+        devBtn.style.padding = "8px 14px";
+        devBtn.style.borderRadius = "6px";
+        devBtn.style.cursor = "pointer";
+        devBtn.style.fontFamily = "'Poppins', sans-serif";
+        devBtn.style.fontWeight = "600";
+        devBtn.style.fontSize = "11px";
+        devBtn.style.letterSpacing = "0.5px";
+        devBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
+        devBtn.style.transition = "background-color 0.2s ease";
+        
+        devBtn.addEventListener("mouseover", () => {
+            devBtn.style.background = "#b71c1c";
+        });
+        devBtn.addEventListener("mouseout", () => {
+            devBtn.style.background = "#d32f2f";
+        });
+
+        devBtn.addEventListener("click", () => {
+            console.log("[Majlis] Dev reset triggered. Clearing localStorage keys...");
+            try {
+                if (visitorId) {
+                    localStorage.removeItem(`majlis_campaign_reward_id_${visitorId}`);
+                    localStorage.removeItem(`majlis_campaign_scratch_revealed_${visitorId}`);
+                    localStorage.removeItem(`majlis_campaign_claimed_${visitorId}`);
+                }
+                localStorage.removeItem(VISITOR_KEY);
+            } catch (e) {
+                console.warn("[Majlis] Error clearing localStorage during dev reset:", e);
+            }
+            
+            // Re-initialize state
+            initializeReward();
+            applyRewardToDOM();
+            
+            // Clear form
+            if (customerForm) {
+                customerForm.reset();
+                [inputName, inputMobile, inputEmail].forEach(input => {
+                    if (input) input.classList.remove("invalid");
+                });
+            }
+
+            // Reset Instagram state
+            isInstagramClicked = false;
+            if (btnSubmitForm) {
+                btnSubmitForm.disabled = true;
+                btnSubmitForm.classList.add("btn-locked");
+                const btnText = btnSubmitForm.querySelector(".btn-text");
+                if (btnText && sessionReward) {
+                    btnText.innerText = sessionReward.isWinner
+                        ? "CLAIM MY " + sessionReward.label.toUpperCase()
+                        : "SUBMIT DETAILS";
+                }
+            }
+            if (instagramInitialState) {
+                instagramInitialState.classList.remove("hidden");
+            }
+            if (instagramSuccessState) {
+                instagramSuccessState.classList.add("hidden");
+            }
+            if (instagramStatusText) {
+                instagramStatusText.innerText = "Instagram step required *";
+                instagramStatusText.classList.remove("verified");
+            }
+            
+            // Show scratch card screen and reset canvas
+            showScreen(screenScratch);
+            initScratchCanvas();
+            console.log("[Majlis] Dev reset complete. Fresh session loaded.");
+        });
+
+        document.body.appendChild(devBtn);
+    }
 });
