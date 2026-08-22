@@ -4,24 +4,36 @@
 
 /* Design Tokens & Variables */
 :root {
-    --primary-gradient: linear-gradient(135deg, #e65c00 0%, #f9d423 100%);
-    --festive-gold: #d4af37;
-    --gold-hover: #f3e5ab;
-    --bg-cream: #fbf9f4;
-    --text-dark: #3a2212;
-    --text-muted: #725a4a;
+    --color-green-deep: #073520;
+    --color-green-medium: #0d472d;
+    --color-green-light: #16603f;
+    --color-cream: #faf7f2;
+    --color-cream-dark: #f0ebd8;
+    --color-gold: #c5a059;
+    --color-gold-light: #dfc896;
+    --color-gold-dark: #9c7b39;
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-green-deep) 0%, var(--color-green-medium) 100%);
+    --gold-gradient: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-light) 50%, var(--color-gold) 100%);
+    --gold-text-gradient: linear-gradient(135deg, #9c7b39 0%, #c5a059 50%, #9c7b39 100%);
+    
+    --festive-gold: var(--color-gold);
+    --gold-hover: var(--color-gold-light);
+    --bg-cream: var(--color-cream);
+    --text-dark: #1b2e24;
+    --text-muted: #536c60;
     --white: #ffffff;
     
     /* System & Semantic Colors */
-    --success: #2e7d32;
-    --error: #d32f2f;
-    --border-color: rgba(212, 175, 55, 0.25);
-    --shadow-soft: 0 10px 30px rgba(58, 34, 18, 0.08);
-    --shadow-medium: 0 15px 40px rgba(58, 34, 18, 0.15);
+    --success: #1b6845;
+    --error: #a82e2e;
+    --border-color: rgba(197, 160, 89, 0.3);
+    --shadow-soft: 0 12px 36px rgba(7, 53, 32, 0.05);
+    --shadow-medium: 0 16px 48px rgba(7, 53, 32, 0.12);
     
     /* Fonts */
     --font-primary: 'Poppins', sans-serif;
-    --font-heading: 'Outfit', sans-serif;
+    --font-heading: 'Poppins', sans-serif;
 }
 
 /* Base Styles & Resets */
@@ -35,7 +47,11 @@
 
 body {
     font-family: var(--font-primary);
-    background: radial-gradient(circle at 50% 50%, #2f1301 0%, #0f0500 100%);
+    background-color: var(--color-green-deep);
+    background-image: 
+        radial-gradient(circle at 50% 15%, rgba(223, 200, 150, 0.08) 0%, transparent 60%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cpath d='M40 0 L80 40 L40 80 L0 40 Z' fill='none' stroke='rgba(197, 160, 89, 0.04)' stroke-width='1'/%3E%3Cpath d='M40 10 L70 40 L40 70 L10 40 Z' fill='none' stroke='rgba(197, 160, 89, 0.03)' stroke-width='0.5'/%3E%3Ccircle cx='40' cy='40' r='3' fill='none' stroke='rgba(197, 160, 89, 0.05)' stroke-width='1'/%3E%3C/svg%3E");
+    background-attachment: fixed;
     color: var(--text-dark);
     min-height: 100vh;
     display: flex;
@@ -43,6 +59,54 @@ body {
     align-items: center;
     overflow-x: hidden;
     padding: 16px;
+    position: relative;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+
+    background-image: url("assets/png/Vector\ Smart\ Object\ copy\ 12.png");
+    background-repeat:space;
+    background-size: 70px 70px;
+    background-position: center;
+
+    opacity: 0.019;
+
+    pointer-events: none;
+    z-index: 0;
+}
+/* Global Header styling */
+.global-header {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 16px;
+    margin-bottom: 18px;
+    padding: 0 16px;
+}
+
+.global-logo {
+    height:120px;
+    object-fit: contain;
+    width: auto;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.18));
+}
+
+.monogram-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.monogram-icon {
+    height: 32px;
+    object-fit: contain;
+    width: auto;
 }
 
 /* App Container Layout */
@@ -68,17 +132,25 @@ body {
 /* Screen Card Styles */
 .screen-card {
     background: var(--bg-cream);
-    border-radius: 28px;
-    border: 3px solid var(--festive-gold);
-    box-shadow: var(--shadow-medium);
+    border-radius: 24px;
+    border: 1px solid rgba(197, 160, 89, 0.4);
+    box-shadow: 0 20px 50px rgba(7, 53, 32, 0.15),
+                inset 0 0 40px rgba(197, 160, 89, 0.03);
     overflow: hidden;
     position: relative;
-    padding: 40px 24px 32px 24px;
+    padding: 36px 24px 32px 24px;
     transform-origin: center;
     transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0;
     transform: scale(0.95) translateY(10px);
     display: none;
+}
+
+#screen-scratch, #screen-instagram, #screen-form {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
 }
 
 .screen-card.active {
@@ -97,18 +169,12 @@ body {
     top: 0;
     left: 0;
     right: 0;
-    height: 12px;
-    background: repeating-linear-gradient(
-        45deg,
-        var(--festive-gold),
-        var(--festive-gold) 10px,
-        #e65c00 10px,
-        #e65c00 20px
-    );
-    border-bottom: 2px solid var(--festive-gold);
+    height: 6px;
+    background: var(--color-gold);
+    border-bottom: 2px solid var(--color-green-deep);
 }
 
-.festive-decor-top-floral {
+/* .festive-decor-top-floral {
     position: absolute;
     top: 0;
     left: 0;
@@ -120,7 +186,7 @@ body {
     background-position: 0 0, 8px 8px;
     background-color: var(--white);
     border-bottom: 2px solid var(--festive-gold);
-}
+} */
 
 .festive-decor-bottom {
     position: absolute;
@@ -128,7 +194,7 @@ body {
     left: 0;
     right: 0;
     height: 6px;
-    background: var(--festive-gold);
+    background: var(--color-gold);
 }
 
 /* Typography Details */
@@ -158,27 +224,29 @@ body {
 
 .campaign-title {
     font-family: var(--font-heading);
-    font-size: 26px;
+    font-size: 22px;
     font-weight: 800;
     text-align: center;
     line-height: 1.25;
-    color: var(--text-dark);
-    margin-bottom: 12px;
+    color: var(--color-green-deep);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 .campaign-title .highlight {
-    background: var(--primary-gradient);
+    background: var(--gold-text-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: inline-block;
 }
 
 .campaign-subtitle {
-    font-size: 14px;
+    font-size: 12px;
     color: var(--text-muted);
     text-align: center;
     line-height: 1.5;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     padding: 0 10px;
 }
 
@@ -229,7 +297,7 @@ body {
 }
 
 .instruction-box {
-    background: rgba(212, 175, 55, 0.08);
+    background: rgba(197, 160, 89, 0.08);
     border: 1px dashed var(--festive-gold);
     border-radius: 12px;
     padding: 12px 16px;
@@ -246,41 +314,112 @@ body {
 /* Screen 2: Scratch Card UI */
 .campaign-header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
 }
 
 .scratch-title {
     font-family: var(--font-heading);
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 700;
-    color: #e65c00;
+    color: var(--color-green-deep);
     margin-bottom: 6px;
 }
 
 .scratch-subtitle {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-muted);
     line-height: 1.5;
 }
 
 .scratch-card-outer {
     background: var(--white);
-    border: 2px solid var(--festive-gold);
-    border-radius: 20px;
-    padding: 12px;
-    width: 294px;
-    height: 294px;
+    border: 1px solid var(--festive-gold);
+    border-radius: 12px;
+    width: 350px;
+    height: auto;
+    min-height: 410px;
     margin: 0 auto 24px auto;
     box-shadow: var(--shadow-soft);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow: hidden;
+}
+
+.scratch-card-header {
+    background: var(--gold-gradient);
+    color: var(--color-green-deep);
+    font-family: var(--font-heading);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    padding: 6px 12px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.scratch-card-body {
+    padding: 16px 20px 12px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.card-supporting-phrase {
+    font-family: var(--font-primary);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 12px;
+    letter-spacing: 0.5px;
+}
+
+.card-monogram {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.card-monogram .monogram-icon {
+    height: 24px;
+    object-fit: contain;
+    width: auto;
+}
+
+.card-campaign-title {
+    font-family: var(--font-heading);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--color-green-deep);
+    text-align: center;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.card-campaign-subtitle {
+    font-family: var(--font-primary);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .scratch-card-inner {
-    width: 100%;
-    height: 100%;
+    width: 250px; /* Restrict width to avoid horizontal stretching */
+    height: 250px; /* Keep it square (1:1) to match canvas buffer ratio */
+    margin: 0 auto 12px auto; /* Centered with equal visual spacing on left/right */
     position: relative;
     border-radius: 12px;
     overflow: hidden;
-    background: #eaeaea;
+    background: var(--color-green-deep);
+    border: 1px solid var(--color-gold);
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* The revealed offer layer behind canvas */
@@ -290,57 +429,66 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: radial-gradient(circle, var(--white) 0%, var(--bg-cream) 100%);
+    background-color: var(--color-cream);
+    background-image: 
+        radial-gradient(circle at 0% 50%, transparent 8px, var(--color-cream-dark) 9px, transparent 10px),
+        radial-gradient(circle at 100% 50%, transparent 8px, var(--color-cream-dark) 9px, transparent 10px);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    padding: 16px;
+    padding: 20px;
     text-align: center;
     z-index: 1;
+    border: 3px solid var(--color-cream);
+    box-sizing: border-box;
+    box-shadow: inset 0 0 15px rgba(197, 160, 89, 0.05);
 }
 
 .offer-badge {
-    background: #e65c00;
-    color: var(--white);
-    font-size: 9px;
+    background: var(--color-green-deep);
+    color: var(--color-gold-light);
+    font-size: 8px;
     font-weight: 700;
-    letter-spacing: 1px;
-    padding: 4px 10px;
+    letter-spacing: 1.5px;
+    padding: 4px 12px;
     border-radius: 20px;
     margin-bottom: 12px;
     text-transform: uppercase;
+    border: 1px solid var(--color-gold);
 }
 
 .congrats-text {
     font-family: var(--font-heading);
-    font-size: 20px;
-    font-weight: 800;
-    color: var(--text-dark);
-    margin-bottom: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-green-deep);
+    margin-bottom: 2px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 .offer-desc {
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-bottom: 10px;
+    font-family: var(--font-primary);
+    font-size: 8px;
+    font-weight: 600;
+    color: var(--color-gold-dark);
+    letter-spacing: 0.75px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
 }
 
 .offer-amount {
     font-family: var(--font-heading);
-    font-size: 44px;
-    font-weight: 850;
-    color: #e65c00;
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--color-gold-dark);
     line-height: 1;
-    margin-bottom: 4px;
-    text-shadow: 1px 1px 0px rgba(0,0,0,0.05);
-}
-
-.offer-subtext {
-    font-size: 11px;
-    color: var(--text-muted);
-    font-weight: 500;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.02);
+    background: var(--gold-text-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .revealed-coupon {
@@ -348,10 +496,13 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 2px;
+    border-top: 1px dashed rgba(197, 160, 89, 0.3);
+    width: 80%;
+    padding-top: 10px;
 }
 
 .coupon-label {
-    font-size: 9px;
+    font-size: 8px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text-muted);
@@ -359,13 +510,36 @@ body {
 
 .coupon-code {
     font-family: var(--font-heading);
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 700;
-    color: var(--text-dark);
-    background: rgba(212,175,55,0.15);
+    color: var(--color-green-deep);
+    background: rgba(197, 160, 89, 0.1);
     border: 1px dashed var(--festive-gold);
-    padding: 4px 12px;
+    padding: 3px 10px;
     border-radius: 6px;
+}
+
+.card-instruction {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-green-deep);
+    text-align: center;
+    margin-top: 4px;
+}
+
+.card-instruction .instruction-icon {
+    font-size: 14px;
+    animation: bounce 2s infinite;
+}
+
+.card-instruction .instruction-text {
+    font-family: var(--font-primary);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.75px;
+    text-transform: uppercase;
 }
 
 /* Canvas overlay */
@@ -390,100 +564,165 @@ body {
 }
 
 .progress-bar-track {
-    width: 200px;
-    height: 8px;
-    background: rgba(58, 34, 18, 0.08);
+    width: 160px;
+    height: 4px;
+    background: rgba(197, 160, 89, 0.15);
     border-radius: 10px;
     overflow: hidden;
 }
 
 .progress-bar-fill {
     height: 100%;
-    background: var(--primary-gradient);
+    background: var(--gold-gradient);
     border-radius: 10px;
     transition: width 0.15s ease-out;
 }
 
 .progress-text {
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 500;
+    color: rgba(250, 247, 242, 0.75);
 }
 
 /* Screen 3: Details Form */
+.form-ticket-card {
+    background: var(--white);
+    border: 1px solid var(--festive-gold);
+    border-radius: 12px;
+    width: 100%;
+    margin-bottom: 20px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: var(--shadow-soft);
+}
+
+.form-ticket-header {
+    background: var(--gold-gradient);
+    color: var(--color-green-deep);
+    font-family: var(--font-heading);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    padding: 6px 12px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.form-ticket-body {
+    padding: 24px 20px;
+}
+
+.form-monogram {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.form-monogram .monogram-icon {
+    height: 28px;
+    object-fit: contain;
+    width: auto;
+}
+
 .form-title {
     font-family: var(--font-heading);
-    font-size: 24px;
+    font-size: 16px;
     font-weight: 700;
     text-align: center;
-    color: var(--text-dark);
-    margin-bottom: 8px;
+    color: var(--color-green-deep);
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 .form-subtitle {
-    font-size: 13px;
+    font-family: var(--font-primary);
+    font-size: 11px;
     color: var(--text-muted);
     text-align: center;
     line-height: 1.5;
-    margin-bottom: 28px;
+    margin-bottom: 16px;
+}
+
+.form-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(197, 160, 89, 0.25) 20%, rgba(197, 160, 89, 0.25) 80%, transparent);
+    margin: 14px 0;
+    width: 100%;
 }
 
 #customer-form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 14px;
+    width: 100%;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    width: 100%;
 }
 
 .input-label {
-    font-size: 12px;
+    font-family: var(--font-primary);
+    font-size: 10px;
     font-weight: 600;
-    color: var(--text-dark);
+    color: var(--color-green-deep);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.75px;
 }
 
 .input-field-wrapper {
     position: relative;
+    width: 100%;
 }
 
 .input-field {
     width: 100%;
-    background: var(--white);
-    border: 2px solid rgba(212, 175, 55, 0.3);
-    border-radius: 12px;
-    padding: 14px 16px;
+    background: #fdfbf7;
+    border: 1px solid rgba(197, 160, 89, 0.35);
+    border-radius: 8px;
+    padding: 10px 14px;
     font-family: var(--font-primary);
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-dark);
     transition: all 0.25s ease;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.01);
 }
 
 .input-field:focus {
-    border-color: #e65c00;
-    box-shadow: 0 0 0 3px rgba(230, 92, 0, 0.15);
+    border-color: var(--color-gold);
+    box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.15),
+                inset 0 1px 3px rgba(0, 0, 0, 0.01);
 }
 
 .input-field.invalid {
     border-color: var(--error);
-    background-color: rgba(211, 47, 47, 0.02);
+    background-color: rgba(168, 46, 46, 0.02);
 }
 
 .error-message {
     display: none;
     color: var(--error);
-    font-size: 11px;
+    font-size: 10px;
     margin-top: 4px;
     font-weight: 500;
 }
 
 .input-field.invalid + .error-message {
     display: block;
+}
+
+.form-security-text {
+    font-family: var(--font-primary);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 10px;
+    letter-spacing: 0.25px;
 }
 
 /* Screen 4: Success Screen */
@@ -495,102 +734,105 @@ body {
 }
 
 .success-icon-wrapper {
-    width: 64px;
-    height: 64px;
-    background: rgba(46, 125, 50, 0.12);
+    width: 56px;
+    height: 56px;
+    background: rgba(27, 104, 69, 0.1);
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     color: var(--success);
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .success-svg {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
 }
 
 .success-title {
     font-family: var(--font-heading);
-    font-size: 24px;
+    font-size: 20px;
     font-weight: 800;
     color: var(--success);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     line-height: 1.2;
 }
 
 .success-subtitle {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-muted);
     line-height: 1.5;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     padding: 0 10px;
 }
 
 /* Ticket/Coupon Component */
 .ticket-card {
     background: var(--white);
-    border: 2px solid var(--festive-gold);
-    border-radius: 16px;
+    border: 1px solid var(--festive-gold);
+    border-radius: 12px;
     width: 100%;
-    margin-bottom: 28px;
+    margin-bottom: 20px;
     overflow: hidden;
     position: relative;
     box-shadow: var(--shadow-soft);
 }
 
 .ticket-header {
-    background: linear-gradient(90deg, #d4af37 0%, #f9d423 100%);
-    color: var(--text-dark);
+    background: var(--gold-gradient);
+    color: var(--color-green-deep);
     font-family: var(--font-heading);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 800;
-    letter-spacing: 2px;
-    padding: 8px 12px;
+    letter-spacing: 1.5px;
+    padding: 6px 12px;
     text-align: center;
 }
 
 .ticket-body {
-    padding: 20px 24px;
+    padding: 16px 20px;
 }
 
 .ticket-percent {
     font-family: var(--font-heading);
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 850;
-    color: #e65c00;
-    margin-bottom: 6px;
+    color: var(--color-gold-dark);
+    margin-bottom: 4px;
+    background: var(--gold-text-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .ticket-coupon-box {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: rgba(58, 34, 18, 0.04);
-    border: 1px solid rgba(58, 34, 18, 0.1);
-    border-radius: 8px;
-    padding: 4px 6px 4px 14px;
-    gap: 12px;
-    margin-bottom: 12px;
+    background: rgba(197, 160, 89, 0.08);
+    border: 1px solid rgba(197, 160, 89, 0.2);
+    border-radius: 6px;
+    padding: 3px 6px 3px 12px;
+    gap: 10px;
+    margin-bottom: 10px;
 }
 
 .ticket-code {
     font-family: var(--font-heading);
     font-weight: 700;
-    font-size: 18px;
+    font-size: 16px;
     letter-spacing: 0.5px;
-    color: var(--text-dark);
+    color: var(--color-green-deep);
 }
 
 .btn-copy {
     background: var(--primary-gradient);
     border: none;
-    border-radius: 6px;
-    padding: 6px 12px;
+    border-radius: 4px;
+    padding: 4px 10px;
     color: var(--white);
     font-family: var(--font-primary);
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
@@ -604,57 +846,57 @@ body {
 }
 
 .ticket-expiry {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--text-muted);
 }
 
 /* Ticket Divider Line & Notches */
 .ticket-divider {
     height: 2px;
-    border-bottom: 2px dashed rgba(212, 175, 55, 0.3);
+    border-bottom: 1.5px dashed rgba(197, 160, 89, 0.4);
     position: relative;
-    margin: 0 12px;
+    margin: 0 10px;
 }
 
 .ticket-divider .notch {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     background: var(--bg-cream);
-    border: 2px solid var(--festive-gold);
+    border: 1px solid var(--festive-gold);
     border-radius: 50%;
     position: absolute;
-    top: -9px;
+    top: -8px;
     z-index: 3;
 }
 
 .ticket-divider .notch.left {
-    left: -22px;
-    clip-path: polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%, 50% 100%, 0% 100%, 0% 0%, 50% 0%); /* Clip helper to align edges nicely */
+    left: -18px;
+    clip-path: polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%, 50% 100%, 0% 100%, 0% 0%, 50% 0%);
     transform: rotate(90deg);
 }
 
 .ticket-divider .notch.right {
-    right: -22px;
+    right: -18px;
     transform: rotate(-90deg);
 }
 
 .ticket-footer {
-    padding: 12px 24px;
-    font-size: 11px;
+    padding: 10px 20px;
+    font-size: 10px;
     color: var(--text-muted);
-    background: rgba(212, 175, 55, 0.05);
+    background: rgba(197, 160, 89, 0.03);
 }
 
 /* Buttons Styles */
 .btn {
     width: 100%;
-    padding: 14px 20px;
-    border-radius: 14px;
+    padding: 12px 18px;
+    border-radius: 10px;
     font-family: var(--font-heading);
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     cursor: pointer;
     display: inline-flex;
     justify-content: center;
@@ -685,11 +927,23 @@ body {
 .btn-primary {
     background: var(--primary-gradient);
     color: var(--white);
-    box-shadow: 0 4px 15px rgba(230, 92, 0, 0.25);
+    box-shadow: 0 4px 12px rgba(7, 53, 32, 0.15);
+}
+
+.btn-claim-cta {
+    border: 1px solid var(--color-gold);
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.25s ease;
+}
+
+.btn-claim-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(7, 53, 32, 0.2);
 }
 
 .btn-primary:hover {
-    box-shadow: 0 6px 20px rgba(230, 92, 0, 0.35);
+    box-shadow: 0 6px 18px rgba(7, 53, 32, 0.25);
     transform: translateY(-2px);
 }
 
@@ -700,11 +954,11 @@ body {
 .btn-secondary {
     background: var(--white);
     color: var(--text-dark);
-    border: 2px solid var(--festive-gold);
+    border: 1px solid var(--festive-gold);
 }
 
 .btn-secondary:hover {
-    background: rgba(212, 175, 55, 0.1);
+    background: rgba(197, 160, 89, 0.08);
     transform: translateY(-2px);
 }
 
@@ -719,18 +973,18 @@ body {
 
 @keyframes glow {
     0% {
-        box-shadow: 0 4px 15px rgba(230, 92, 0, 0.25);
+        box-shadow: 0 4px 12px rgba(7, 53, 32, 0.15);
     }
     100% {
-        box-shadow: 0 4px 25px rgba(230, 92, 0, 0.55);
+        box-shadow: 0 4px 20px rgba(7, 53, 32, 0.4);
     }
 }
 
 /* Loading Spinner state */
 .loader {
-    width: 18px;
-    height: 18px;
-    border: 2.5px solid rgba(255, 255, 255, 0.3);
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     border-top-color: var(--white);
     animation: spin 0.8s linear infinite;
@@ -751,7 +1005,7 @@ body {
 
 @keyframes pulse {
     0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+    50% { transform: scale(1.03); }
     100% { transform: scale(1); }
 }
 
@@ -761,8 +1015,8 @@ body {
 
 @keyframes bounce {
     0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-8px); }
-    60% { transform: translateY(-4px); }
+    40% { transform: translateY(-6px); }
+    60% { transform: translateY(-3px); }
 }
 
 .animate-fade-in {
@@ -770,7 +1024,7 @@ body {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -780,18 +1034,19 @@ body {
         padding: 12px;
     }
     .screen-card {
-        padding: 32px 18px 24px 18px;
+        padding: 24px 16px 20px 16px;
         border-radius: 20px;
     }
     .campaign-title {
-        font-size: 22px;
+        font-size: 18px;
     }
     .scratch-card-outer {
-        width: 270px;
-        height: 270px;
+        width: 280px;
+        height: 280px;
+        padding: 12px;
     }
     .offer-amount {
-        font-size: 38px;
+        font-size: 32px;
     }
 }
 
@@ -917,20 +1172,20 @@ body {
 }
 
 .toast {
-    background: #2a1b12;
-    color: #fbf9f4;
+    background: var(--color-green-deep);
+    color: var(--white);
     padding: 14px 20px;
     border-radius: 14px;
     font-size: 13px;
     font-weight: 600;
-    box-shadow: 0 10px 25px rgba(58, 34, 18, 0.25);
+    box-shadow: 0 10px 25px rgba(7, 53, 32, 0.25);
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     gap: 10px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--color-gold);
     border-left: 4px solid var(--error);
 }
 
@@ -951,7 +1206,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(251, 249, 244, 0.94); /* matches --bg-cream with high opacity */
+    background: rgba(250, 247, 242, 0.96); /* matches --bg-cream with high opacity */
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     display: flex;
@@ -960,11 +1215,12 @@ body {
     z-index: 10;
     padding: 16px;
     box-sizing: border-box;
-    border-radius: 12px;
+    border-radius: 10px;
     opacity: 0;
     transform: scale(0.9);
     transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     pointer-events: none;
+    border: 4px solid var(--color-cream);
 }
 
 .congrats-overlay.show {
@@ -983,18 +1239,16 @@ body {
 
 .congrats-overlay-title {
     font-family: var(--font-heading);
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
     margin-bottom: 2px;
     letter-spacing: 0.5px;
-    background: linear-gradient(135deg, #e65c00 0%, #f9d423 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    display: inline-block;
+    color: var(--color-green-deep);
+    text-transform: uppercase;
 }
 
 .congrats-overlay-subtitle {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
     color: var(--text-muted);
     margin-bottom: 8px;
@@ -1004,10 +1258,13 @@ body {
     font-family: var(--font-heading);
     font-size: 34px;
     font-weight: 850;
-    color: #e65c00;
+    color: var(--color-gold-dark);
     line-height: 1;
     margin-bottom: 8px;
-    text-shadow: 1px 1px 0px rgba(0,0,0,0.05);
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.02);
+    background: var(--gold-text-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .congrats-overlay-coupon {
@@ -1027,10 +1284,10 @@ body {
 
 .congrats-overlay-coupon .coupon-code {
     font-family: var(--font-heading);
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
-    color: var(--text-dark);
-    background: rgba(212,175,55,0.15);
+    color: var(--color-green-deep);
+    background: rgba(197, 160, 89, 0.1);
     border: 1px dashed var(--festive-gold);
     padding: 3px 10px;
     border-radius: 6px;
@@ -1038,7 +1295,7 @@ body {
 
 .btn-small {
     padding: 10px 16px !important;
-    font-size: 12px !important;
+    font-size: 11px !important;
     border-radius: 10px !important;
 }
 
@@ -1049,3 +1306,28 @@ body {
 
 
 
+/* Mobile scratch card alignment fix */
+@media (max-width: 600px) {
+    .scratch-card-outer {
+        width: calc(100vw - 32px);
+        max-width: 350px;
+        margin-left: auto;
+        margin-right: auto;
+        box-sizing: border-box;
+    }
+
+    .scratch-card-inner {
+        width: 250px !important;
+        height: 250px !important;
+        max-width: calc(100% - 32px);
+        margin-left: auto !important;
+        margin-right: auto !important;
+        box-sizing: border-box;
+    }
+
+    .scratch-card-inner canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+    }
+}

@@ -8,13 +8,53 @@
     <!-- Google Fonts for Festive Premium Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Main Style Sheet -->
     <link rel="stylesheet" href="style.css">
     
+    <style>
+        /* Premium Initialization Loader Overlay */
+        .init-loader-overlay {
+            position: fixed;
+            inset: 0;
+            background: #073520; /* Deep forest green */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999999;
+            gap: 18px;
+        }
+        .init-spinner {
+            width: 44px;
+            height: 44px;
+            border: 3px solid rgba(197, 160, 89, 0.15); /* Light gold border hint */
+            border-radius: 50%;
+            border-top-color: #c5a059; /* Bright gold spinner */
+            animation: init-spin 1s linear infinite;
+        }
+        .init-text {
+            color: #faf7f2;
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            opacity: 0.85;
+        }
+        @keyframes init-spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
+
+    <!-- Premium Loading Overlay -->
+    <div id="init-loader" class="init-loader-overlay">
+        <div class="init-spinner"></div>
+        <div class="init-text">Loading Majlis Promo...</div>
+    </div>
 
     <!-- Confetti Canvas (renders overlays globally when triggered) -->
     <canvas id="confetti-canvas"></canvas>
@@ -22,57 +62,63 @@
     <!-- Main Container -->
     <main class="app-container">
 
+        <!-- Global Header with official logo -->
+        <header class="global-header">
+            <img src="assets/png/majlis Logo(white).png" alt="Arabian Majlis" class="global-logo">
+        </header>
+
         <!-- ==================== SCREEN 1: SCRATCH CARD PAGE ==================== -->
         <section id="screen-scratch" class="screen-card active">
             <div class="festive-decor-top-floral"></div>
             <div class="screen-content">
-                <div class="campaign-header">
-                    <!-- Traditional Kerala logo styling -->
-                    <div class="logo-container">
-                        <span class="logo-text">MAJLIS</span>
-                        <span class="logo-tagline">CELEBRATE ONAM</span>
-                    </div>
-                    <h1 class="campaign-title">Onam Grand Feast<br><span class="highlight">Scratch &amp; Win</span></h1>
-                    <p class="campaign-subtitle">Scratch to reveal your exclusive festive reward!</p>
-                </div>
-
                 <!-- Scratch Card Outer Container -->
                 <div class="scratch-card-outer">
-                    <div class="scratch-card-inner">
-                        
-                        <!-- Offer Layer (Revealed below) -->
-                        <div class="offer-reveal-layer">
-                            <div class="offer-badge">SPECIAL OFFERS</div>
-                            <div class="congrats-text" id="offer-congrats">🎉 CONGRATULATIONS!</div>
-                            <p class="offer-desc">You are eligible for an exclusive offer!</p>
-                            <div class="offer-amount animate-pulse">20% OFF</div>
-                            <p class="offer-subtext">On your next dining experience</p>
-                            <div class="revealed-coupon">
-                                <span class="coupon-label">Coupon Code:</span>
-                                <span class="coupon-code">ONAM20</span>
-                            </div>
+                    <div class="scratch-card-header">MAJLIS SCRATCH &amp; WIN</div>
+                    <div class="scratch-card-body">
+                        <!-- Subtle Gold Monogram Accent inside the card -->
+                        <div class="card-monogram">
+                            <img src="assets/png/Vector Smart Object copy 12.png" alt="Majlis" class="monogram-icon">
                         </div>
-
-                        <!-- Congratulations Overlay (initially hidden) -->
-                        <div id="congrats-overlay" class="congrats-overlay hidden">
-                            <div class="congrats-overlay-content">
-                                <h2 class="congrats-overlay-title">🎉 CONGRATULATIONS!</h2>
-                                <p class="congrats-overlay-subtitle">You are eligible for an exclusive offer!</p>
-                                <div class="congrats-overlay-offer animate-pulse">20% OFF</div>
-                                <div class="congrats-overlay-coupon">
+                        
+                        <h1 class="card-campaign-title">SCRATCH &amp; WIN</h1>
+                        <p class="card-campaign-subtitle">Your festive reward is waiting</p>
+                        
+                        <div class="scratch-card-inner">
+                            <!-- Offer Layer (Revealed below) -->
+                            <div class="offer-reveal-layer">
+                                <div class="offer-badge">SPECIAL OFFERS</div>
+                                <h2 class="congrats-text" id="offer-congrats">CONGRATULATIONS</h2>
+                                <p class="offer-desc">YOUR FESTIVE REWARD</p>
+                                <div class="offer-amount animate-pulse">20% OFF</div>
+                                <div class="revealed-coupon">
                                     <span class="coupon-label">Coupon Code:</span>
                                     <span class="coupon-code">ONAM20</span>
                                 </div>
-                                <button id="btn-scratch-continue" class="btn btn-primary btn-glow btn-small" style="margin-top: 14px; width: 100%;">
-                                    <span>Claim Your Offer 🎁</span>
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                                </button>
                             </div>
-                        </div>
 
-                        <!-- Canvas Layer (Scratchable front) -->
-                        <canvas id="scratch-canvas" width="300" height="300"></canvas>
+                            <!-- Congratulations Overlay (initially hidden) -->
+                            <div id="congrats-overlay" class="congrats-overlay hidden">
+                                <div class="congrats-overlay-content">
+                                    <h2 class="congrats-overlay-title">CONGRATULATIONS</h2>
+                                    <p class="congrats-overlay-subtitle">YOUR FESTIVE REWARD</p>
+                                    <div class="congrats-overlay-offer animate-pulse">20% OFF</div>
+                                    <div class="congrats-overlay-coupon">
+                                        <span class="coupon-label">Coupon Code:</span>
+                                        <span class="coupon-code">ONAM20</span>
+                                    </div>
+                                    <button id="btn-scratch-continue" class="btn btn-primary btn-glow btn-small" style="margin-top: 14px; width: 100%;">
+                                        <span>Claim Your Offer 🎁</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Canvas Layer (Scratchable front) -->
+                            <canvas id="scratch-canvas" width="300" height="300"></canvas>
+                        </div>
                         
+                        <!-- Small supporting phrase below scratch area -->
+                        <p class="card-supporting-phrase">Reveal your festive reward</p>
                     </div>
                 </div>
 
@@ -97,9 +143,8 @@
                     <span>Back</span>
                 </button>
 
-                <div class="logo-container">
-                    <span class="logo-text">MAJLIS</span>
-                    <span class="logo-tagline">CELEBRATE ONAM</span>
+                <div class="monogram-container">
+                    <img src="assets/png/Vector Smart Object copy 12.png" alt="Majlis" class="monogram-icon">
                 </div>
                 
                 <!-- Congratulations Details -->
@@ -127,49 +172,66 @@
         <section id="screen-form" class="screen-card hidden">
             <div class="festive-decor-top"></div>
             <div class="screen-content">
-                <!-- Back Button -->
-                <button class="btn-back" id="btn-back-to-instagram" title="Go back to Instagram screen">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="back-icon"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                    <span>Back</span>
-                </button>
 
-                <h2 class="form-title">Unlock Your Reward 🎁</h2>
-                <p class="form-subtitle">Fill in your details below to save your coupon and activate your discount.</p>
-                
-                <form id="customer-form" novalidate>
-                    <!-- Name Group -->
-                    <div class="input-group">
-                        <label for="input-name" class="input-label">Full Name</label>
-                        <div class="input-field-wrapper">
-                            <input type="text" id="input-name" class="input-field" placeholder="Enter your full name" required>
-                            <span class="error-message" id="error-name">Please enter your name</span>
+
+                <!-- Form wrapped in a ticket card visual style reference wrapper -->
+                <div class="form-ticket-card">
+                    <div class="form-ticket-header">YOUR REWARD IS RESERVED</div>
+                    <div class="form-ticket-body">
+                        <!-- Subtle gold monogram at the top of the form -->
+                        <div class="form-monogram">
+                            <img src="assets/png/Vector Smart Object copy 12.png" alt="Majlis" class="monogram-icon">
                         </div>
-                    </div>
 
-                    <!-- Mobile Group -->
-                    <div class="input-group">
-                        <label for="input-mobile" class="input-label">Mobile Number</label>
-                        <div class="input-field-wrapper">
-                            <input type="tel" id="input-mobile" class="input-field" placeholder="10-digit mobile number" maxlength="10" required>
-                            <span class="error-message" id="error-mobile">Please enter a valid 10-digit mobile number</span>
-                        </div>
-                    </div>
+                        <h2 class="form-title">YOUR REWARD IS RESERVED</h2>
+                        <p class="form-subtitle">Your exclusive Majlis offer is waiting for you.</p>
+                        
+                        <div class="form-divider"></div>
+                        
+                        <form id="customer-form" novalidate>
+                            <!-- Name Group -->
+                            <div class="input-group">
+                                <label for="input-name" class="input-label">Full Name</label>
+                                <div class="input-field-wrapper">
+                                    <input type="text" id="input-name" class="input-field" placeholder="Your full name" required>
+                                    <span class="error-message" id="error-name">Please enter your name</span>
+                                </div>
+                            </div>
 
-                    <!-- Email Group -->
-                    <div class="input-group">
-                        <label for="input-email" class="input-label">Email Address</label>
-                        <div class="input-field-wrapper">
-                            <input type="email" id="input-email" class="input-field" placeholder="username@example.com (optional)">
-                            <span class="error-message" id="error-email">Please enter a valid email address (optional)</span>
-                        </div>
-                    </div>
+                            <!-- Mobile Group -->
+                            <div class="input-group">
+                                <label for="input-mobile" class="input-label">Mobile Number</label>
+                                <div class="input-field-wrapper">
+                                    <input type="tel" id="input-mobile" class="input-field" placeholder="10-digit mobile number" maxlength="10" required>
+                                    <span class="error-message" id="error-mobile">Please enter a valid 10-digit mobile number</span>
+                                </div>
+                            </div>
 
-                    <!-- Submit Button with loading state -->
-                    <button type="submit" id="btn-submit-form" class="btn btn-primary">
-                        <span class="btn-text">Claim My 20% OFF Coupon</span>
-                        <div class="loader hidden" id="form-loader"></div>
-                    </button>
-                </form>
+                            <!-- Email Group -->
+                            <div class="input-group">
+                                <label for="input-email" class="input-label">Email Address</label>
+                                <div class="input-field-wrapper">
+                                    <input type="email" id="input-email" class="input-field" placeholder="Email address (optional)">
+                                    <span class="error-message" id="error-email">Please enter a valid email address (optional)</span>
+                                </div>
+                            </div>
+
+                            <div class="form-divider"></div>
+
+                            <!-- Submit Button with loading state -->
+                            <button type="submit" id="btn-submit-form" class="btn btn-primary btn-claim-cta">
+                                <span class="btn-text">CLAIM MY 20% OFF</span>
+                                <div class="loader hidden" id="form-loader"></div>
+                            </button>
+                            
+                            <!-- Security details -->
+                            <p class="form-security-text">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px; opacity: 0.7;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <span>Your information is secure.</span>
+                            </p>
+                        </form>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -184,7 +246,7 @@
                 </div>
                 
                 <h2 class="success-title">Offer Successfully Claimed!</h2>
-                <p class="success-subtitle font-alt">Your discount code is now active and a confirmation has been sent to your email.</p>
+                <!-- <p class="success-subtitle font-alt">Your discount code is now active and a confirmation has been sent to your email.</p> -->
                 
                 <!-- Ticket Coupon Card -->
                 <div class="ticket-card animate-fade-in">
@@ -210,7 +272,7 @@
                 </div>
 
                 <!-- Play / Reset Campaign Button -->
-                <button id="btn-restart" class="btn btn-secondary">
+                <button id="btn-restart" class="btn btn-secondary hidden">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon-left"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
                     <span>Play Again / Reset Demo</span>
                 </button>
