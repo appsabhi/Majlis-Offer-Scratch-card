@@ -1016,88 +1016,88 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Step 4: Inject Development Reset Control if DEV_MODE is active
-    if (DEV_MODE) {
-        const devBtn = document.createElement("button");
-        devBtn.id = "dev-reset-btn";
-        devBtn.innerText = "DEV: RESET TEST";
-        devBtn.style.position = "fixed";
-        devBtn.style.bottom = "12px";
-        devBtn.style.right = "12px";
-        devBtn.style.zIndex = "99999";
-        devBtn.style.background = "#d32f2f";
-        devBtn.style.color = "#ffffff";
-        devBtn.style.border = "1px solid rgba(255,255,255,0.3)";
-        devBtn.style.padding = "8px 14px";
-        devBtn.style.borderRadius = "6px";
-        devBtn.style.cursor = "pointer";
-        devBtn.style.fontFamily = "'Poppins', sans-serif";
-        devBtn.style.fontWeight = "600";
-        devBtn.style.fontSize = "11px";
-        devBtn.style.letterSpacing = "0.5px";
-        devBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
-        devBtn.style.transition = "background-color 0.2s ease";
+    // if (DEV_MODE) {
+    //     const devBtn = document.createElement("button");
+    //     devBtn.id = "dev-reset-btn";
+    //     devBtn.innerText = "DEV: RESET TEST";
+    //     devBtn.style.position = "fixed";
+    //     devBtn.style.bottom = "12px";
+    //     devBtn.style.right = "12px";
+    //     devBtn.style.zIndex = "99999";
+    //     devBtn.style.background = "#d32f2f";
+    //     devBtn.style.color = "#ffffff";
+    //     devBtn.style.border = "1px solid rgba(255,255,255,0.3)";
+    //     devBtn.style.padding = "8px 14px";
+    //     devBtn.style.borderRadius = "6px";
+    //     devBtn.style.cursor = "pointer";
+    //     devBtn.style.fontFamily = "'Poppins', sans-serif";
+    //     devBtn.style.fontWeight = "600";
+    //     devBtn.style.fontSize = "11px";
+    //     devBtn.style.letterSpacing = "0.5px";
+    //     devBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
+    //     devBtn.style.transition = "background-color 0.2s ease";
         
-        devBtn.addEventListener("mouseover", () => {
-            devBtn.style.background = "#b71c1c";
-        });
-        devBtn.addEventListener("mouseout", () => {
-            devBtn.style.background = "#d32f2f";
-        });
+    //     devBtn.addEventListener("mouseover", () => {
+    //         devBtn.style.background = "#b71c1c";
+    //     });
+    //     devBtn.addEventListener("mouseout", () => {
+    //         devBtn.style.background = "#d32f2f";
+    //     });
 
-        devBtn.addEventListener("click", () => {
-            console.log("[Majlis] Dev reset triggered. Clearing localStorage keys...");
-            try {
-                if (visitorId) {
-                    localStorage.removeItem(`majlis_campaign_reward_id_${visitorId}`);
-                    localStorage.removeItem(`majlis_campaign_scratch_revealed_${visitorId}`);
-                    localStorage.removeItem(`majlis_campaign_claimed_${visitorId}`);
-                }
-                localStorage.removeItem(VISITOR_KEY);
-            } catch (e) {
-                console.warn("[Majlis] Error clearing localStorage during dev reset:", e);
-            }
+    //     devBtn.addEventListener("click", () => {
+    //         console.log("[Majlis] Dev reset triggered. Clearing localStorage keys...");
+    //         try {
+    //             if (visitorId) {
+    //                 localStorage.removeItem(`majlis_campaign_reward_id_${visitorId}`);
+    //                 localStorage.removeItem(`majlis_campaign_scratch_revealed_${visitorId}`);
+    //                 localStorage.removeItem(`majlis_campaign_claimed_${visitorId}`);
+    //             }
+    //             localStorage.removeItem(VISITOR_KEY);
+    //         } catch (e) {
+    //             console.warn("[Majlis] Error clearing localStorage during dev reset:", e);
+    //         }
             
-            // Re-initialize state
-            initializeReward();
-            applyRewardToDOM();
+    //         // Re-initialize state
+    //         initializeReward();
+    //         applyRewardToDOM();
             
-            // Clear form
-            if (customerForm) {
-                customerForm.reset();
-                [inputName, inputMobile, inputEmail].forEach(input => {
-                    if (input) input.classList.remove("invalid");
-                });
-            }
+    //         // Clear form
+    //         if (customerForm) {
+    //             customerForm.reset();
+    //             [inputName, inputMobile, inputEmail].forEach(input => {
+    //                 if (input) input.classList.remove("invalid");
+    //             });
+    //         }
 
-            // Reset Instagram state
-            isInstagramClicked = false;
-            if (btnSubmitForm) {
-                btnSubmitForm.disabled = true;
-                btnSubmitForm.classList.add("btn-locked");
-                const btnText = btnSubmitForm.querySelector(".btn-text");
-                if (btnText && sessionReward) {
-                    btnText.innerText = sessionReward.isWinner
-                        ? "CLAIM MY " + sessionReward.label.toUpperCase()
-                        : "SUBMIT DETAILS";
-                }
-            }
-            if (instagramInitialState) {
-                instagramInitialState.classList.remove("hidden");
-            }
-            if (instagramSuccessState) {
-                instagramSuccessState.classList.add("hidden");
-            }
-            if (instagramStatusText) {
-                instagramStatusText.innerText = "Instagram step required *";
-                instagramStatusText.classList.remove("verified");
-            }
+    //         // Reset Instagram state
+    //         isInstagramClicked = false;
+    //         if (btnSubmitForm) {
+    //             btnSubmitForm.disabled = true;
+    //             btnSubmitForm.classList.add("btn-locked");
+    //             const btnText = btnSubmitForm.querySelector(".btn-text");
+    //             if (btnText && sessionReward) {
+    //                 btnText.innerText = sessionReward.isWinner
+    //                     ? "CLAIM MY " + sessionReward.label.toUpperCase()
+    //                     : "SUBMIT DETAILS";
+    //             }
+    //         }
+    //         if (instagramInitialState) {
+    //             instagramInitialState.classList.remove("hidden");
+    //         }
+    //         if (instagramSuccessState) {
+    //             instagramSuccessState.classList.add("hidden");
+    //         }
+    //         if (instagramStatusText) {
+    //             instagramStatusText.innerText = "Instagram step required *";
+    //             instagramStatusText.classList.remove("verified");
+    //         }
             
-            // Show scratch card screen and reset canvas
-            showScreen(screenScratch);
-            initScratchCanvas();
-            console.log("[Majlis] Dev reset complete. Fresh session loaded.");
-        });
+    //         // Show scratch card screen and reset canvas
+    //         showScreen(screenScratch);
+    //         initScratchCanvas();
+    //         console.log("[Majlis] Dev reset complete. Fresh session loaded.");
+    //     });
 
-        document.body.appendChild(devBtn);
-    }
+    //     document.body.appendChild(devBtn);
+    // }
 });
