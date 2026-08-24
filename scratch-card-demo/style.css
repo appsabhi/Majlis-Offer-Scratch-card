@@ -1331,3 +1331,104 @@ body::before {
         display: block;
     }
 }
+
+/* Premium Global Footer — Arabian Majlis Signature */
+.global-footer {
+    width: 100%;
+    margin-top: 36px;
+    padding-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: transparent;
+    z-index: 10;
+    position: relative;
+}
+
+.footer-divider {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.footer-divider .divider-line {
+    flex: 1;
+    max-width: 100px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(197, 160, 89, 0.35), transparent);
+}
+
+.footer-divider .divider-diamond {
+    color: var(--color-gold);
+    font-size: 8px;
+    opacity: 0.7;
+    line-height: 1;
+}
+
+.footer-brand {
+    font-family: var(--font-primary);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--color-gold);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.footer-location {
+    font-style: normal;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: rgba(250, 247, 242, 0.7);
+    max-width: 320px;
+    margin-bottom: 8px;
+    word-break: break-word;
+}
+
+.footer-website {
+    margin-bottom: 14px;
+}
+
+.footer-link {
+    font-size: 11.5px;
+    color: var(--color-gold-light);
+    text-decoration: none;
+    letter-spacing: 0.4px;
+    transition: color 0.2s ease, opacity 0.2s ease;
+    opacity: 0.85;
+    word-break: break-all;
+}
+
+.footer-link:hover {
+    color: #ffffff;
+    opacity: 1;
+    text-decoration: underline;
+}
+
+.footer-socials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+.social-icon-link {
+    color: var(--color-gold);
+    opacity: 0.75;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 50%;
+    transition: all 0.25s ease;
+}
+
+.social-icon-link:hover {
+    color: #ffffff;
+    opacity: 1;
+    transform: translateY(-2px);
+}

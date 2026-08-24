@@ -4,8 +4,7 @@
 
 // --- CONFIGURATION SECTION ---
 // Copy the Web App URL from your deployed Google Apps Script and paste it below:
-const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbxh12R_ZP_9oyP8rXT2SB2qhZGgpERhyrquQ6rcb_8rbT6-w8oTh4L0Pl_ecwI64wJH/exec";
-
+const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyXm_94jLRyCPccQQ2bYxB6DjPveIW2Mh9YZ6dFIiHHfkJsKTHck2U8o1V2S41mDISssA/exec"
 // ==========================================================================
 // REWARD POOL CONFIGURATION
 // Add, remove, or edit offers here. Each entry must have:
@@ -14,11 +13,9 @@ const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbxh12R_ZP
 //   isWinner   — true if this is a real prize; false for "Better Luck" outcomes
 // ==========================================================================
 const REWARD_POOL = [
-    { id: "offer20",      label: "20% OFF",              coupon: "ONAM20",   isWinner: true  },
-    { id: "offer15",      label: "15% OFF",              coupon: "ONAM15",   isWinner: true  },
-    { id: "offer10",      label: "10% OFF",              coupon: "ONAM10",   isWinner: true  },
-    { id: "offerDessert", label: "Free Dessert",         coupon: "ONAMDESS", isWinner: true  },
-    { id: "betterLuck",   label: "Better Luck Next Time",coupon: null,       isWinner: false }
+    { id: "offer20",      label: "21% OFF",              coupon: "ONAM20",   isWinner: true  },
+    { id: "offerDessert", label: "₹199 for Unlimited Mandhi",         coupon: "ONAMDESS", isWinner: true  },
+    // { id: "betterLuck",   label: "Better Luck Next Time",coupon: null,       isWinner: false }
 ];
 
 // Holds the ONE reward assigned for this session. Set once on page load.
@@ -302,6 +299,9 @@ function applyRewardToDOM() {
     }
 
     // ---- Coupon code elements ----
+    // Flag to control customer-facing coupon code visibility (set to false to temporarily hide coupon UI)
+    const SHOW_COUPON_CODE = false;
+
     // Reveal layer coupon
     const revealCouponParent  = document.querySelector(".offer-reveal-layer .revealed-coupon");
     const revealCouponCode    = document.querySelector(".offer-reveal-layer .coupon-code");
@@ -315,7 +315,7 @@ function applyRewardToDOM() {
     const successCouponCode   = document.getElementById("success-coupon-code");
     const ticketCouponBox     = document.querySelector(".ticket-coupon-box");
 
-    if (r.isWinner && r.coupon) {
+    if (SHOW_COUPON_CODE && r.isWinner && r.coupon) {
         // Winner: show all coupon elements with the correct code
         if (revealCouponParent)   revealCouponParent.style.display   = "";
         if (revealCouponCode)     revealCouponCode.innerText         = r.coupon;
@@ -326,13 +326,13 @@ function applyRewardToDOM() {
         if (successCouponCode)    successCouponCode.innerText        = r.coupon;
         if (ticketCouponBox)      ticketCouponBox.style.display      = "";
     } else {
-        // Non-winner (Better Luck Next Time): hide coupon sections gracefully
+        // Hide coupon sections gracefully while keeping r.coupon intact for backend & future toggle
         if (revealCouponParent)   revealCouponParent.style.display   = "none";
         if (overlayCouponParent)  overlayCouponParent.style.display  = "none";
         if (congratsCouponParent) congratsCouponParent.style.display = "none";
         if (ticketCouponBox)      ticketCouponBox.style.display      = "none";
-        // Clear the success code element so copy button copies empty string
-        if (successCouponCode)    successCouponCode.innerText        = "";
+        // Store coupon code element text internally if needed for clipboard/future use
+        if (successCouponCode)    successCouponCode.innerText        = r.coupon || "";
     }
 }
 
@@ -880,7 +880,7 @@ document.addEventListener("DOMContentLoaded", () => {
             fullName: inputName.value.trim(),
             mobile: inputMobile.value.trim(),
             mobileNumber: inputMobile.value.trim(), // Defensively send both mobile and mobileNumber
-            email: inputEmail.value.trim(),
+            email: emailVal !== "" ? emailVal : "Not Provided",
             offer: offerVal,
             couponCode: couponVal
         };
