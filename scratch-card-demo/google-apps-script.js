@@ -43,7 +43,7 @@ function doPost(e) {
     sheet.appendRow([
       data.fullName || "",
       data.mobileNumber || "",
-      data.email || "",
+      (data.email && data.email.trim() !== "") ? data.email : "Not Provided",
       data.offer || "",
       data.couponCode || "",
       dateString
