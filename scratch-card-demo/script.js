@@ -25,9 +25,15 @@ const REWARD_POOL = [
 let sessionReward = null;
 
 const VISITOR_KEY = "majlis_campaign_visitor_id";
-const DEV_MODE = true;
+const DEV_MODE = false;
+
+// 5 HOURS = 18,000 seconds = 18,000,000 milliseconds
+const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
 
 let visitorId = null;
+let currentCycleId = null;
+let cycleStartedAt = null;
+let cycleExpiresAt = null;
 
 /**
  * Generates a stable unique anonymous visitor/session identifier.
@@ -36,6 +42,18 @@ function generateVisitorId() {
     const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let result = "";
     for (let i = 0; i < 16; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+/**
+ * Generates a unique cycle identifier for a 5-hour campaign window.
+ */
+function generateCycleId() {
+    const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "cycle_";
+    for (let i = 0; i < 12; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;
@@ -63,7 +81,28 @@ function getClaimedStorageKey() {
 }
 
 /**
- * Checks whether the visitor has successfully claimed.
+ * Helper to get the cycle ID storage key for the current visitor.
+ */
+function getCycleIdStorageKey() {
+    return `majlis_campaign_cycle_id_${visitorId || "fallback"}`;
+}
+
+/**
+ * Helper to get the cycle started timestamp storage key for the current visitor.
+ */
+function getCycleStartedAtStorageKey() {
+    return `majlis_campaign_cycle_started_at_${visitorId || "fallback"}`;
+}
+
+/**
+ * Helper to get the cycle expires timestamp storage key for the current visitor.
+ */
+function getCycleExpiresAtStorageKey() {
+    return `majlis_campaign_cycle_expires_at_${visitorId || "fallback"}`;
+}
+
+/**
+ * Checks whether the visitor has successfully claimed in the current 5-hour cycle.
  */
 function isClaimedState() {
     try {
@@ -75,21 +114,87 @@ function isClaimedState() {
 }
 
 /**
- * Persists the successfully claimed state for the visitor.
+ * Persists the successfully claimed state for the visitor's current 5-hour cycle.
  */
 function setClaimedState() {
     try {
         localStorage.setItem(getClaimedStorageKey(), "true");
-        console.log("[Majlis] Persisted claimed success state for visitor:", visitorId);
+        console.log("[Majlis] Persisted claimed success state for visitor:", visitorId, "| Cycle:", currentCycleId);
     } catch (e) {
         console.warn("[Majlis] Error persisting claimed state:", e);
     }
 }
 
 /**
- * Checks persistent storage for an already assigned reward.
- * Restores it if found; otherwise, randomly selects one, saves it, and uses it.
- * Ensures Math.random() is only run once on the very first visit.
+ * Clears local campaign cycle state for the current visitor (used upon 5-hour expiration or dev reset).
+ * Does NOT delete the visitorId identity or Google Sheet claims.
+ */
+function clearCurrentCycleState() {
+    try {
+        if (visitorId) {
+            localStorage.removeItem(getRewardStorageKey());
+            localStorage.removeItem(getRevealedStorageKey());
+            localStorage.removeItem(getClaimedStorageKey());
+            localStorage.removeItem(getCycleIdStorageKey());
+            localStorage.removeItem(getCycleStartedAtStorageKey());
+            localStorage.removeItem(getCycleExpiresAtStorageKey());
+            console.log("[Majlis] Cleared old local campaign cycle state for visitor:", visitorId);
+        }
+    } catch (e) {
+        console.warn("[Majlis] Error clearing campaign cycle state:", e);
+    }
+    sessionReward = null;
+    currentCycleId = null;
+    cycleStartedAt = null;
+    cycleExpiresAt = null;
+}
+
+/**
+ * Starts a fresh 5-hour campaign cycle for the visitor.
+ */
+function startNewCycle() {
+    const now = Date.now();
+    currentCycleId = generateCycleId();
+    cycleStartedAt = now;
+
+    let durationMs = FIVE_HOURS_MS;
+    if (DEV_MODE) {
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const devSec = urlParams.get("dev_duration_sec");
+            if (devSec && !isNaN(Number(devSec)) && Number(devSec) > 0) {
+                durationMs = Number(devSec) * 1000;
+                console.log("[Majlis DEV] Using shortened cycle duration from URL param:", devSec, "seconds");
+            }
+        } catch (e) {
+            // fallback
+        }
+    }
+
+    cycleExpiresAt = now + durationMs;
+
+    // Select a new random reward from REWARD_POOL
+    const idx = Math.floor(Math.random() * REWARD_POOL.length);
+    sessionReward = REWARD_POOL[idx];
+
+    try {
+        localStorage.setItem(getCycleIdStorageKey(), currentCycleId);
+        localStorage.setItem(getCycleStartedAtStorageKey(), cycleStartedAt.toString());
+        localStorage.setItem(getCycleExpiresAtStorageKey(), cycleExpiresAt.toString());
+        localStorage.setItem(getRewardStorageKey(), sessionReward.id);
+        console.log(
+            "[Majlis] Started NEW 5-hour campaign cycle:", currentCycleId,
+            "| Reward:", sessionReward.label,
+            "| Expires at:", new Date(cycleExpiresAt).toLocaleTimeString()
+        );
+    } catch (e) {
+        console.warn("[Majlis] Error saving new cycle state to localStorage:", e);
+    }
+}
+
+/**
+ * Resolves visitor identity and checks/manages the 5-hour campaign cycle expiration.
+ * Restores existing valid cycle or creates a new 5-hour cycle on expiration.
  */
 function initializeReward() {
     // 1. Resolve or generate visitorId
@@ -107,33 +212,50 @@ function initializeReward() {
         if (!visitorId) visitorId = "fallback";
     }
 
-    const rewardKey = getRewardStorageKey();
-
-    // 2. Resolve or generate reward for this visitorId
+    // 2. Resolve or check existing 5-hour campaign cycle
+    const now = Date.now();
     try {
-        const savedId = localStorage.getItem(rewardKey);
-        if (savedId) {
-            const found = REWARD_POOL.find(item => item.id === savedId);
-            if (found) {
-                sessionReward = found;
-                console.log("[Majlis] Restored existing reward for visitor:", sessionReward.label, "| ID:", sessionReward.id);
-                return;
+        const savedExpiresAt = localStorage.getItem(getCycleExpiresAtStorageKey());
+        const savedCycleId = localStorage.getItem(getCycleIdStorageKey());
+        const savedRewardId = localStorage.getItem(getRewardStorageKey());
+
+        if (savedExpiresAt && savedCycleId && savedRewardId) {
+            const expiresTimestamp = Number(savedExpiresAt);
+            if (!isNaN(expiresTimestamp) && now < expiresTimestamp) {
+                // Cycle is still VALID! Restore existing state
+                const foundReward = REWARD_POOL.find(item => item.id === savedRewardId);
+                if (foundReward) {
+                    currentCycleId = savedCycleId;
+                    cycleStartedAt = Number(localStorage.getItem(getCycleStartedAtStorageKey()) || now);
+                    cycleExpiresAt = expiresTimestamp;
+                    sessionReward = foundReward;
+
+                    const remainingSec = Math.round((cycleExpiresAt - now) / 1000);
+                    console.log(
+                        "[Majlis] Restored VALID active cycle:", currentCycleId,
+                        "| Reward:", sessionReward.label,
+                        "| Time remaining:", remainingSec, "seconds",
+                        "| Expires at:", new Date(cycleExpiresAt).toLocaleTimeString()
+                    );
+                    return;
+                }
+            } else {
+                console.log(
+                    "[Majlis] Existing campaign cycle has EXPIRED.",
+                    "Now:", new Date(now).toLocaleTimeString(),
+                    "| Expired at:", new Date(expiresTimestamp).toLocaleTimeString()
+                );
             }
+        } else {
+            console.log("[Majlis] No existing cycle found. Creating initial cycle.");
         }
     } catch (e) {
-        console.warn("[Majlis] Error accessing localStorage for reward:", e);
+        console.warn("[Majlis] Error accessing localStorage for cycle expiration:", e);
     }
 
-    // No existing reward, select a new one randomly
-    const idx = Math.floor(Math.random() * REWARD_POOL.length);
-    sessionReward = REWARD_POOL[idx];
-    console.log("[Majlis] Selected new reward randomly for visitor:", sessionReward.label, "| ID:", sessionReward.id);
-
-    try {
-        localStorage.setItem(rewardKey, sessionReward.id);
-    } catch (e) {
-        console.warn("[Majlis] Error saving reward to localStorage:", e);
-    }
+    // 3. If cycle expired or missing: clear old cycle local state & create fresh 5-hour cycle
+    clearCurrentCycleState();
+    startNewCycle();
 }
 
 /**
@@ -1015,89 +1137,102 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 400);
     }
 
-    // Step 4: Inject Development Reset Control if DEV_MODE is active
-    // if (DEV_MODE) {
-    //     const devBtn = document.createElement("button");
-    //     devBtn.id = "dev-reset-btn";
-    //     devBtn.innerText = "DEV: RESET TEST";
-    //     devBtn.style.position = "fixed";
-    //     devBtn.style.bottom = "12px";
-    //     devBtn.style.right = "12px";
-    //     devBtn.style.zIndex = "99999";
-    //     devBtn.style.background = "#d32f2f";
-    //     devBtn.style.color = "#ffffff";
-    //     devBtn.style.border = "1px solid rgba(255,255,255,0.3)";
-    //     devBtn.style.padding = "8px 14px";
-    //     devBtn.style.borderRadius = "6px";
-    //     devBtn.style.cursor = "pointer";
-    //     devBtn.style.fontFamily = "'Poppins', sans-serif";
-    //     devBtn.style.fontWeight = "600";
-    //     devBtn.style.fontSize = "11px";
-    //     devBtn.style.letterSpacing = "0.5px";
-    //     devBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
-    //     devBtn.style.transition = "background-color 0.2s ease";
-        
-    //     devBtn.addEventListener("mouseover", () => {
-    //         devBtn.style.background = "#b71c1c";
-    //     });
-    //     devBtn.addEventListener("mouseout", () => {
-    //         devBtn.style.background = "#d32f2f";
-    //     });
+    // Step 5: Inject Development Test Controls if DEV_MODE is active
+    if (DEV_MODE) {
+        const devContainer = document.createElement("div");
+        devContainer.id = "dev-controls-container";
+        devContainer.style.position = "fixed";
+        devContainer.style.bottom = "12px";
+        devContainer.style.right = "12px";
+        devContainer.style.zIndex = "99999";
+        devContainer.style.display = "flex";
+        devContainer.style.gap = "8px";
 
-    //     devBtn.addEventListener("click", () => {
-    //         console.log("[Majlis] Dev reset triggered. Clearing localStorage keys...");
-    //         try {
-    //             if (visitorId) {
-    //                 localStorage.removeItem(`majlis_campaign_reward_id_${visitorId}`);
-    //                 localStorage.removeItem(`majlis_campaign_scratch_revealed_${visitorId}`);
-    //                 localStorage.removeItem(`majlis_campaign_claimed_${visitorId}`);
-    //             }
-    //             localStorage.removeItem(VISITOR_KEY);
-    //         } catch (e) {
-    //             console.warn("[Majlis] Error clearing localStorage during dev reset:", e);
-    //         }
-            
-    //         // Re-initialize state
-    //         initializeReward();
-    //         applyRewardToDOM();
-            
-    //         // Clear form
-    //         if (customerForm) {
-    //             customerForm.reset();
-    //             [inputName, inputMobile, inputEmail].forEach(input => {
-    //                 if (input) input.classList.remove("invalid");
-    //             });
-    //         }
+        const devResetBtn = document.createElement("button");
+        devResetBtn.id = "dev-reset-btn";
+        devResetBtn.innerText = "DEV: RESET TEST";
+        devResetBtn.style.background = "#d32f2f";
+        devResetBtn.style.color = "#ffffff";
+        devResetBtn.style.border = "1px solid rgba(255,255,255,0.3)";
+        devResetBtn.style.padding = "8px 12px";
+        devResetBtn.style.borderRadius = "6px";
+        devResetBtn.style.cursor = "pointer";
+        devResetBtn.style.fontFamily = "'Poppins', sans-serif";
+        devResetBtn.style.fontWeight = "600";
+        devResetBtn.style.fontSize = "11px";
+        devResetBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
+        devResetBtn.style.transition = "background-color 0.2s ease";
 
-    //         // Reset Instagram state
-    //         isInstagramClicked = false;
-    //         if (btnSubmitForm) {
-    //             btnSubmitForm.disabled = true;
-    //             btnSubmitForm.classList.add("btn-locked");
-    //             const btnText = btnSubmitForm.querySelector(".btn-text");
-    //             if (btnText && sessionReward) {
-    //                 btnText.innerText = sessionReward.isWinner
-    //                     ? "CLAIM MY " + sessionReward.label.toUpperCase()
-    //                     : "SUBMIT DETAILS";
-    //             }
-    //         }
-    //         if (instagramInitialState) {
-    //             instagramInitialState.classList.remove("hidden");
-    //         }
-    //         if (instagramSuccessState) {
-    //             instagramSuccessState.classList.add("hidden");
-    //         }
-    //         if (instagramStatusText) {
-    //             instagramStatusText.innerText = "Instagram step required *";
-    //             instagramStatusText.classList.remove("verified");
-    //         }
-            
-    //         // Show scratch card screen and reset canvas
-    //         showScreen(screenScratch);
-    //         initScratchCanvas();
-    //         console.log("[Majlis] Dev reset complete. Fresh session loaded.");
-    //     });
+        const devExpireBtn = document.createElement("button");
+        devExpireBtn.id = "dev-expire-btn";
+        devExpireBtn.innerText = "DEV: EXPIRE 5H CYCLE";
+        devExpireBtn.style.background = "#e65c00";
+        devExpireBtn.style.color = "#ffffff";
+        devExpireBtn.style.border = "1px solid rgba(255,255,255,0.3)";
+        devExpireBtn.style.padding = "8px 12px";
+        devExpireBtn.style.borderRadius = "6px";
+        devExpireBtn.style.cursor = "pointer";
+        devExpireBtn.style.fontFamily = "'Poppins', sans-serif";
+        devExpireBtn.style.fontWeight = "600";
+        devExpireBtn.style.fontSize = "11px";
+        devExpireBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
+        devExpireBtn.style.transition = "background-color 0.2s ease";
 
-    //     document.body.appendChild(devBtn);
-    // }
+        const executeDevReset = (expire = false) => {
+            console.log("[Majlis DEV] Action triggered. Expire first:", expire);
+            if (expire) {
+                // Set cycle expiry timestamp into the past to simulate expiration
+                try {
+                    localStorage.setItem(getCycleExpiresAtStorageKey(), (Date.now() - 1000).toString());
+                } catch (e) {
+                    console.warn(e);
+                }
+            } else {
+                clearCurrentCycleState();
+            }
+
+            initializeReward();
+            applyRewardToDOM();
+
+            if (customerForm) {
+                customerForm.reset();
+                [inputName, inputMobile, inputEmail].forEach(input => {
+                    if (input) input.classList.remove("invalid");
+                });
+            }
+
+            isInstagramClicked = false;
+            if (btnSubmitForm) {
+                btnSubmitForm.disabled = true;
+                btnSubmitForm.classList.add("btn-locked");
+                const btnText = btnSubmitForm.querySelector(".btn-text");
+                if (btnText && sessionReward) {
+                    btnText.innerText = sessionReward.isWinner
+                        ? "CLAIM MY " + sessionReward.label.toUpperCase()
+                        : "SUBMIT DETAILS";
+                }
+            }
+
+            if (instagramInitialState) instagramInitialState.classList.remove("hidden");
+            if (instagramSuccessState) instagramSuccessState.classList.add("hidden");
+            if (instagramStatusText) {
+                instagramStatusText.innerText = "Instagram step required *";
+                instagramStatusText.classList.remove("verified");
+            }
+
+            if (isClaimedState()) {
+                showScreen(screenSuccess);
+            } else {
+                showScreen(screenScratch);
+                initScratchCanvas();
+            }
+        };
+
+        devResetBtn.addEventListener("click", () => executeDevReset(false));
+        devExpireBtn.addEventListener("click", () => executeDevReset(true));
+
+        devContainer.appendChild(devResetBtn);
+        devContainer.appendChild(devExpireBtn);
+        document.body.appendChild(devContainer);
+    }
 });
