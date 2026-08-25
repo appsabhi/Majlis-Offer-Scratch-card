@@ -1,23 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Majlis Onam Fest - Scratch & Win!</title>
-<link rel="icon" href="./assets/png/Vector Smart Object copy 12.png" type="image/png">    <!-- Google Fonts for Festive Premium Typography -->
+    <link rel="icon" href="./assets/png/Vector Smart Object copy 12.png" type="image/png">
+    <!-- Google Fonts for Festive Premium Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <!-- Main Style Sheet -->
     <link rel="stylesheet" href="style.css">
-    
+
     <style>
         /* Premium Initialization Loader Overlay */
         .init-loader-overlay {
             position: fixed;
             inset: 0;
-            background: #073520; /* Deep forest green */
+            background: #073520;
+            /* Deep forest green */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -25,14 +28,18 @@
             z-index: 999999;
             gap: 18px;
         }
+
         .init-spinner {
             width: 44px;
             height: 44px;
-            border: 3px solid rgba(197, 160, 89, 0.15); /* Light gold border hint */
+            border: 3px solid rgba(197, 160, 89, 0.15);
+            /* Light gold border hint */
             border-radius: 50%;
-            border-top-color: #c5a059; /* Bright gold spinner */
+            border-top-color: #c5a059;
+            /* Bright gold spinner */
             animation: init-spin 1s linear infinite;
         }
+
         .init-text {
             color: #faf7f2;
             font-family: 'Poppins', sans-serif;
@@ -42,11 +49,15 @@
             text-transform: uppercase;
             opacity: 0.85;
         }
+
         @keyframes init-spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
+
 <body>
 
     <!-- Premium Loading Overlay -->
@@ -61,9 +72,12 @@
     <!-- Main Container -->
     <main class="app-container">
 
-        <!-- Global Header with official logo -->
+        <!-- Global Header with official logo and campaign call graphic -->
         <header class="global-header">
             <img src="assets/png/majlis Logo(white).png" alt="Arabian Majlis" class="global-logo">
+            <div class="campaign-logo-wrapper">
+                <img src="assets/png/majlis campaign logo.png" alt="Majlis Campaign Offer" class="campaign-call-logo">
+            </div>
         </header>
 
         <!-- ==================== SCREEN 1: SCRATCH CARD PAGE ==================== -->
@@ -72,22 +86,22 @@
             <div class="screen-content">
                 <!-- Scratch Card Outer Container -->
                 <div class="scratch-card-outer">
-                    <div class="scratch-card-header">MAJLIS SCRATCH &amp; WIN</div>
+                    <div class="scratch-card-header">ARABIAN MAJLIS</div>
                     <div class="scratch-card-body">
                         <!-- Subtle Gold Monogram Accent inside the card -->
                         <div class="card-monogram">
                             <img src="assets/png/Vector Smart Object copy 12.png" alt="Majlis" class="monogram-icon">
                         </div>
-                        
-                        <h1 class="card-campaign-title">SCRATCH &amp; WIN</h1>
-                        <p class="card-campaign-subtitle">Your festive reward is waiting</p>
-                        
+
+                        <h1 class="card-campaign-title">SCAN SCRATCH WIN</h1>
+                        <p class="card-campaign-subtitle">YOUR ARABIAN MAJLIS SURPRISE IS <br>JUST A SCRATCH AWAY!</p>
+
                         <div class="scratch-card-inner">
                             <!-- Offer Layer (Revealed below) -->
                             <div class="offer-reveal-layer">
                                 <div class="offer-badge">SPECIAL OFFERS</div>
                                 <h2 class="congrats-text" id="offer-congrats">CONGRATULATIONS</h2>
-                                <p class="offer-desc">YOUR FESTIVE REWARD</p>
+                                <p class="offer-desc">YOUR EXCLUSIVE OFFER</p>
                                 <div class="offer-amount animate-pulse">20% OFF</div>
                                 <div class="revealed-coupon" style="display: none;">
                                     <span class="coupon-label">Coupon Code:</span>
@@ -99,15 +113,21 @@
                             <div id="congrats-overlay" class="congrats-overlay hidden">
                                 <div class="congrats-overlay-content">
                                     <h2 class="congrats-overlay-title">CONGRATULATIONS</h2>
-                                    <p class="congrats-overlay-subtitle">YOUR FESTIVE REWARD</p>
+                                    <p class="congrats-overlay-subtitle">YOUR EXCLUSIVE OFFER</p>
                                     <div class="congrats-overlay-offer animate-pulse">20% OFF</div>
                                     <div class="congrats-overlay-coupon" style="display: none;">
                                         <span class="coupon-label">Coupon Code:</span>
                                         <span class="coupon-code">ONAM20</span>
                                     </div>
-                                    <button id="btn-scratch-continue" class="btn btn-primary btn-glow btn-small" style="margin-top: 14px; width: 100%;">
+                                    <button id="btn-scratch-continue" class="btn btn-primary btn-glow btn-small"
+                                        style="margin-top: 14px; width: 100%;">
                                         <span>Claim Your Offer 🎁</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="btn-icon"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                            stroke-linecap="round" stroke-linejoin="round" class="btn-icon">
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            <polyline points="12 5 19 12 12 19"></polyline>
+                                        </svg>
                                     </button>
                                 </div>
                             </div>
@@ -115,9 +135,9 @@
                             <!-- Canvas Layer (Scratchable front) -->
                             <canvas id="scratch-canvas" width="300" height="300"></canvas>
                         </div>
-                        
+
                         <!-- Small supporting phrase below scratch area -->
-                        <p class="card-supporting-phrase">Reveal your festive reward</p>
+
                     </div>
                 </div>
 
@@ -138,14 +158,19 @@
             <div class="screen-content congrats-step-card">
                 <!-- Back Button -->
                 <button class="btn-back" id="btn-back-to-scratch" title="Go back to scratch card">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="back-icon"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                        class="back-icon">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
                     <span>Back</span>
                 </button>
 
                 <div class="monogram-container">
                     <img src="assets/png/Vector Smart Object copy 12.png" alt="Majlis" class="monogram-icon">
                 </div>
-                
+
                 <!-- Congratulations Details -->
                 <div class="congrats-section animate-fade-in">
                     <h2 class="congrats-title">🎉 CONGRATULATIONS!</h2>
@@ -156,7 +181,7 @@
                         <span class="coupon-code">ONAM20</span>
                     </div>
                 </div>
-                
+
                 <!-- Claim Button -->
                 <button id="btn-claim-offer" class="btn btn-primary btn-glow" style="margin-top: 10px;">
                     <span>Claim My Offer 🎁</span>
@@ -175,24 +200,25 @@
 
                 <!-- Form wrapped in a ticket card visual style reference wrapper -->
                 <div class="form-ticket-card">
-                    <div class="form-ticket-header">YOUR REWARD IS RESERVED</div>
+                    <div class="form-ticket-header"></div>
                     <div class="form-ticket-body">
                         <!-- Subtle gold monogram at the top of the form -->
                         <div class="form-monogram">
                             <img src="assets/png/Vector Smart Object copy 12.png" alt="Majlis" class="monogram-icon">
                         </div>
 
-                        <h2 class="form-title">YOUR REWARD IS RESERVED</h2>
-                        <p class="form-subtitle">Your exclusive Majlis offer is waiting for you.</p>
-                        
+                        <h2 class="form-title">YOU’VE REDEEMED YOUR OFFER!</h2>
+                        <p class="form-subtitle">Enjoy your exclusive offer at Arabian Majlis</p>
+
                         <div class="form-divider"></div>
-                        
+
                         <form id="customer-form" novalidate>
                             <!-- Name Group -->
                             <div class="input-group">
                                 <label for="input-name" class="input-label">Full Name</label>
                                 <div class="input-field-wrapper">
-                                    <input type="text" id="input-name" class="input-field" placeholder="Your full name" required>
+                                    <input type="text" id="input-name" class="input-field" placeholder="Your full name"
+                                        required>
                                     <span class="error-message" id="error-name">Please enter your name</span>
                                 </div>
                             </div>
@@ -201,8 +227,10 @@
                             <div class="input-group">
                                 <label for="input-mobile" class="input-label">Mobile Number</label>
                                 <div class="input-field-wrapper">
-                                    <input type="tel" id="input-mobile" class="input-field" placeholder="10-digit mobile number" maxlength="10" required>
-                                    <span class="error-message" id="error-mobile">Please enter a valid 10-digit mobile number</span>
+                                    <input type="tel" id="input-mobile" class="input-field"
+                                        placeholder="10-digit mobile number" maxlength="10" required>
+                                    <span class="error-message" id="error-mobile">Please enter a valid 10-digit mobile
+                                        number</span>
                                 </div>
                             </div>
 
@@ -210,8 +238,10 @@
                             <div class="input-group">
                                 <label for="input-email" class="input-label">Email Address</label>
                                 <div class="input-field-wrapper">
-                                    <input type="email" id="input-email" class="input-field" placeholder="Email address (optional)">
-                                    <span class="error-message" id="error-email">Please enter a valid email address (optional)</span>
+                                    <input type="email" id="input-email" class="input-field"
+                                        placeholder="Email address (optional)">
+                                    <span class="error-message" id="error-email">Please enter a email address
+                                        (optional)</span>
                                 </div>
                             </div>
 
@@ -219,13 +249,19 @@
 
                             <!-- Submit Button with loading state -->
                             <button type="submit" id="btn-submit-form" class="btn btn-primary btn-claim-cta">
-                                <span class="btn-text">CLAIM MY 20% OFF</span>
+                                <span class="btn-text">CLAIM OFFER</span>
                                 <div class="loader hidden" id="form-loader"></div>
                             </button>
-                            
+
                             <!-- Security details -->
                             <p class="form-security-text">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle; margin-right: 4px; opacity: 0.7;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    style="display: inline-block; vertical-align: middle; margin-right: 4px; opacity: 0.7;">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
                                 <span>Your information is secure.</span>
                             </p>
                         </form>
@@ -239,40 +275,60 @@
             <div class="festive-decor-top-floral"></div>
             <div class="screen-content success-content">
                 <div class="success-icon-wrapper animate-bounce">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="success-svg">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5" class="success-svg">
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
                 </div>
-                
+
                 <h2 class="success-title">Offer Successfully Claimed!</h2>
                 <!-- <p class="success-subtitle font-alt">Your discount code is now active and a confirmation has been sent to your email.</p> -->
-                
+
                 <!-- Ticket Coupon Card -->
                 <div class="ticket-card animate-fade-in">
-                    <div class="ticket-header">MAJLIS ONAM PROMO</div>
+                    <div class="ticket-header"></div>
                     <div class="ticket-body">
                         <div class="ticket-percent">20% OFF</div>
                         <div class="ticket-coupon-box" style="display: none;">
                             <div class="ticket-code" id="success-coupon-code">ONAM20</div>
                             <button id="btn-copy-code" class="btn-copy" title="Copy coupon code">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="copy-svg"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="copy-svg">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
                                 <span id="copy-text">Copy</span>
                             </button>
                         </div>
-                        <p class="ticket-expiry">Valid until: August 30, 2026</p>
+                        <!-- <p class="ticket-expiry">Valid until: August 30, 2026</p> -->
+                        
+                        <!-- Instagram Redemption Instruction (Appears ONLY on claimed active offer) -->
+                        <div class="ticket-instagram-instruction" id="ticket-instagram-instruction">
+                            <span class="insta-text-line">Follow us on Instagram</span>
+                            <a href="https://www.instagram.com/arabianmajlis_signature/" target="_blank" rel="noopener noreferrer" class="insta-handle-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="insta-icon"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                <span>@arabianmajlis_signature</span>
+                            </a>
+                            <span class="insta-text-line">to redeem the offer</span>
+                        </div>
                     </div>
                     <div class="ticket-divider">
                         <div class="notch left"></div>
                         <div class="notch right"></div>
                     </div>
                     <div class="ticket-footer">
-                        Show this ticket to your waiter to redeem.
+                     <p class="card-supporting-phrase" id="ticket-validity-phrase">GRAB YOUR OFFER - VALID ONLY FOR 10 DAYS!</p>
                     </div>
                 </div>
 
                 <!-- Play / Reset Campaign Button -->
                 <button id="btn-restart" class="btn btn-secondary hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn-icon-left"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        class="btn-icon-left">
+                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                    </svg>
                     <span>Play Again / Reset Demo</span>
                 </button>
             </div>
@@ -288,20 +344,31 @@
             </div>
 
             <div class="footer-brand">ARABIAN MAJLIS</div>
-            <address class="footer-location">Koduvally Bus Stand Ln, Koduvally, Kerala 673572</address>
+            <address class="footer-location">Near lakshmi mills, Avinashi road, Coimbatore</address>
 
             <div class="footer-website">
-                <a href="https://www.arabianmajlislyf.com/" target="_blank" rel="noopener noreferrer" class="footer-link">
+                <a href="https://www.arabianmajlislyf.com/" target="_blank" rel="noopener noreferrer"
+                    class="footer-link">
                     www.arabianmajlislyf.com
                 </a>
             </div>
 
             <div class="footer-socials">
-                <a href="https://www.instagram.com/arabianmajlis_signature/" target="_blank" rel="noopener noreferrer" class="social-icon-link" aria-label="Instagram">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                <a href="https://www.instagram.com/arabianmajlis_signature/" target="_blank" rel="noopener noreferrer"
+                    class="social-icon-link" aria-label="Instagram">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                    </svg>
                 </a>
-                <a href="https://www.facebook.com/BadrGroupCalicut/" target="_blank" rel="noopener noreferrer" class="social-icon-link" aria-label="Facebook">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                <a href="https://www.facebook.com/BadrGroupCalicut/" target="_blank" rel="noopener noreferrer"
+                    class="social-icon-link" aria-label="Facebook">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                    </svg>
                 </a>
             </div>
         </footer>
@@ -314,4 +381,5 @@
     <!-- Client-side script -->
     <script src="script.js?v=4"></script>
 </body>
+
 </html>
