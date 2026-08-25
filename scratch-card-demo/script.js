@@ -24,13 +24,7 @@ let sessionReward = null;
 const VISITOR_KEY = "majlis_campaign_visitor_id";
 const DEV_MODE = false;
 
-// 5 HOURS = 18,000 seconds = 18,000,000 milliseconds
-const FIVE_HOURS_MS = 5 * 60 * 60 * 1000;
-
 let visitorId = null;
-let currentCycleId = null;
-let cycleStartedAt = null;
-let cycleExpiresAt = null;
 
 /**
  * Generates a stable unique anonymous visitor/session identifier.
@@ -39,18 +33,6 @@ function generateVisitorId() {
     const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let result = "";
     for (let i = 0; i < 16; i++) {
-        result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return result;
-}
-
-/**
- * Generates a unique cycle identifier for a 5-hour campaign window.
- */
-function generateCycleId() {
-    const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-    let result = "cycle_";
-    for (let i = 0; i < 12; i++) {
         result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;
@@ -78,28 +60,7 @@ function getClaimedStorageKey() {
 }
 
 /**
- * Helper to get the cycle ID storage key for the current visitor.
- */
-function getCycleIdStorageKey() {
-    return `majlis_campaign_cycle_id_${visitorId || "fallback"}`;
-}
-
-/**
- * Helper to get the cycle started timestamp storage key for the current visitor.
- */
-function getCycleStartedAtStorageKey() {
-    return `majlis_campaign_cycle_started_at_${visitorId || "fallback"}`;
-}
-
-/**
- * Helper to get the cycle expires timestamp storage key for the current visitor.
- */
-function getCycleExpiresAtStorageKey() {
-    return `majlis_campaign_cycle_expires_at_${visitorId || "fallback"}`;
-}
-
-/**
- * Checks whether the visitor has successfully claimed in the current 5-hour cycle.
+ * Checks whether the visitor has successfully claimed their reward.
  */
 function isClaimedState() {
     try {
@@ -111,87 +72,36 @@ function isClaimedState() {
 }
 
 /**
- * Persists the successfully claimed state for the visitor's current 5-hour cycle.
+ * Persists the successfully claimed state for the visitor.
  */
 function setClaimedState() {
     try {
         localStorage.setItem(getClaimedStorageKey(), "true");
-        console.log("[Majlis] Persisted claimed success state for visitor:", visitorId, "| Cycle:", currentCycleId);
+        console.log("[Majlis] Persisted claimed success state for visitor:", visitorId);
     } catch (e) {
         console.warn("[Majlis] Error persisting claimed state:", e);
     }
 }
 
 /**
- * Clears local campaign cycle state for the current visitor (used upon 5-hour expiration or dev reset).
- * Does NOT delete the visitorId identity or Google Sheet claims.
+ * Clears local campaign state for the current visitor (used for dev reset).
  */
-function clearCurrentCycleState() {
+function clearLocalState() {
     try {
         if (visitorId) {
             localStorage.removeItem(getRewardStorageKey());
             localStorage.removeItem(getRevealedStorageKey());
             localStorage.removeItem(getClaimedStorageKey());
-            localStorage.removeItem(getCycleIdStorageKey());
-            localStorage.removeItem(getCycleStartedAtStorageKey());
-            localStorage.removeItem(getCycleExpiresAtStorageKey());
-            console.log("[Majlis] Cleared old local campaign cycle state for visitor:", visitorId);
+            console.log("[Majlis] Cleared local campaign state for visitor:", visitorId);
         }
     } catch (e) {
-        console.warn("[Majlis] Error clearing campaign cycle state:", e);
+        console.warn("[Majlis] Error clearing campaign state:", e);
     }
     sessionReward = null;
-    currentCycleId = null;
-    cycleStartedAt = null;
-    cycleExpiresAt = null;
 }
 
 /**
- * Starts a fresh 5-hour campaign cycle for the visitor.
- */
-function startNewCycle() {
-    const now = Date.now();
-    currentCycleId = generateCycleId();
-    cycleStartedAt = now;
-
-    let durationMs = FIVE_HOURS_MS;
-    if (DEV_MODE) {
-        try {
-            const urlParams = new URLSearchParams(window.location.search);
-            const devSec = urlParams.get("dev_duration_sec");
-            if (devSec && !isNaN(Number(devSec)) && Number(devSec) > 0) {
-                durationMs = Number(devSec) * 1000;
-                console.log("[Majlis DEV] Using shortened cycle duration from URL param:", devSec, "seconds");
-            }
-        } catch (e) {
-            // fallback
-        }
-    }
-
-    cycleExpiresAt = now + durationMs;
-
-    // Select a new random reward from REWARD_POOL
-    const idx = Math.floor(Math.random() * REWARD_POOL.length);
-    sessionReward = REWARD_POOL[idx];
-
-    try {
-        localStorage.setItem(getCycleIdStorageKey(), currentCycleId);
-        localStorage.setItem(getCycleStartedAtStorageKey(), cycleStartedAt.toString());
-        localStorage.setItem(getCycleExpiresAtStorageKey(), cycleExpiresAt.toString());
-        localStorage.setItem(getRewardStorageKey(), sessionReward.id);
-        console.log(
-            "[Majlis] Started NEW 5-hour campaign cycle:", currentCycleId,
-            "| Reward:", sessionReward.label,
-            "| Expires at:", new Date(cycleExpiresAt).toLocaleTimeString()
-        );
-    } catch (e) {
-        console.warn("[Majlis] Error saving new cycle state to localStorage:", e);
-    }
-}
-
-/**
- * Resolves visitor identity and checks/manages the 5-hour campaign cycle expiration.
- * Restores existing valid cycle or creates a new 5-hour cycle on expiration.
+ * Resolves visitor identity and assigns or restores their campaign reward.
  */
 function initializeReward() {
     // 1. Resolve or generate visitorId
@@ -209,50 +119,31 @@ function initializeReward() {
         if (!visitorId) visitorId = "fallback";
     }
 
-    // 2. Resolve or check existing 5-hour campaign cycle
-    const now = Date.now();
+    // 2. Resolve existing reward or pick a new one for this visitor
     try {
-        const savedExpiresAt = localStorage.getItem(getCycleExpiresAtStorageKey());
-        const savedCycleId = localStorage.getItem(getCycleIdStorageKey());
         const savedRewardId = localStorage.getItem(getRewardStorageKey());
-
-        if (savedExpiresAt && savedCycleId && savedRewardId) {
-            const expiresTimestamp = Number(savedExpiresAt);
-            if (!isNaN(expiresTimestamp) && now < expiresTimestamp) {
-                // Cycle is still VALID! Restore existing state
-                const foundReward = REWARD_POOL.find(item => item.id === savedRewardId);
-                if (foundReward) {
-                    currentCycleId = savedCycleId;
-                    cycleStartedAt = Number(localStorage.getItem(getCycleStartedAtStorageKey()) || now);
-                    cycleExpiresAt = expiresTimestamp;
-                    sessionReward = foundReward;
-
-                    const remainingSec = Math.round((cycleExpiresAt - now) / 1000);
-                    console.log(
-                        "[Majlis] Restored VALID active cycle:", currentCycleId,
-                        "| Reward:", sessionReward.label,
-                        "| Time remaining:", remainingSec, "seconds",
-                        "| Expires at:", new Date(cycleExpiresAt).toLocaleTimeString()
-                    );
-                    return;
-                }
-            } else {
-                console.log(
-                    "[Majlis] Existing campaign cycle has EXPIRED.",
-                    "Now:", new Date(now).toLocaleTimeString(),
-                    "| Expired at:", new Date(expiresTimestamp).toLocaleTimeString()
-                );
+        if (savedRewardId) {
+            const foundReward = REWARD_POOL.find(item => item.id === savedRewardId);
+            if (foundReward) {
+                sessionReward = foundReward;
+                console.log("[Majlis] Restored existing reward for visitor:", sessionReward.label);
+                return;
             }
-        } else {
-            console.log("[Majlis] No existing cycle found. Creating initial cycle.");
         }
     } catch (e) {
-        console.warn("[Majlis] Error accessing localStorage for cycle expiration:", e);
+        console.warn("[Majlis] Error accessing localStorage for saved reward:", e);
     }
 
-    // 3. If cycle expired or missing: clear old cycle local state & create fresh 5-hour cycle
-    clearCurrentCycleState();
-    startNewCycle();
+    // Select a random reward from REWARD_POOL if none saved
+    const idx = Math.floor(Math.random() * REWARD_POOL.length);
+    sessionReward = REWARD_POOL[idx];
+
+    try {
+        localStorage.setItem(getRewardStorageKey(), sessionReward.id);
+        console.log("[Majlis] Assigned NEW reward for visitor:", sessionReward.label);
+    } catch (e) {
+        console.warn("[Majlis] Error saving reward to localStorage:", e);
+    }
 }
 
 /**
@@ -1163,34 +1054,9 @@ document.addEventListener("DOMContentLoaded", () => {
         devResetBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
         devResetBtn.style.transition = "background-color 0.2s ease";
 
-        const devExpireBtn = document.createElement("button");
-        devExpireBtn.id = "dev-expire-btn";
-        devExpireBtn.innerText = "DEV: EXPIRE 5H CYCLE";
-        devExpireBtn.style.background = "#e65c00";
-        devExpireBtn.style.color = "#ffffff";
-        devExpireBtn.style.border = "1px solid rgba(255,255,255,0.3)";
-        devExpireBtn.style.padding = "8px 12px";
-        devExpireBtn.style.borderRadius = "6px";
-        devExpireBtn.style.cursor = "pointer";
-        devExpireBtn.style.fontFamily = "'Poppins', sans-serif";
-        devExpireBtn.style.fontWeight = "600";
-        devExpireBtn.style.fontSize = "11px";
-        devExpireBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
-        devExpireBtn.style.transition = "background-color 0.2s ease";
-
-        const executeDevReset = (expire = false) => {
-            console.log("[Majlis DEV] Action triggered. Expire first:", expire);
-            if (expire) {
-                // Set cycle expiry timestamp into the past to simulate expiration
-                try {
-                    localStorage.setItem(getCycleExpiresAtStorageKey(), (Date.now() - 1000).toString());
-                } catch (e) {
-                    console.warn(e);
-                }
-            } else {
-                clearCurrentCycleState();
-            }
-
+        devResetBtn.addEventListener("click", () => {
+            console.log("[Majlis DEV] Reset action triggered.");
+            clearLocalState();
             initializeReward();
             applyRewardToDOM();
 
@@ -1226,13 +1092,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 showScreen(screenScratch);
                 initScratchCanvas();
             }
-        };
-
-        devResetBtn.addEventListener("click", () => executeDevReset(false));
-        devExpireBtn.addEventListener("click", () => executeDevReset(true));
+        });
 
         devContainer.appendChild(devResetBtn);
-        devContainer.appendChild(devExpireBtn);
         document.body.appendChild(devContainer);
     }
 });
