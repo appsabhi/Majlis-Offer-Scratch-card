@@ -21,9 +21,7 @@ const REWARD_POOL = [
 // Holds the ONE reward assigned for this session. Set once on page load.
 let sessionReward = null;
 
-const VISITOR_KEY = "majlis_campaign_visitor_id";
-// DEV_MODE is enabled for testing (can also be activated via ?dev=true in URL or on localhost)
-const DEV_MODE = true || window.location.search.includes("dev=true") || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+const DEV_MODE = false;
 
 let visitorId = null;
 
@@ -1187,116 +1185,5 @@ document.addEventListener("DOMContentLoaded", () => {
         setTimeout(() => {
             initLoader.remove();
         }, 400);
-    }
-
-    // Step 5: Inject Development Test Controls if DEV_MODE is active
-    if (DEV_MODE) {
-        const devContainer = document.createElement("div");
-        devContainer.id = "dev-controls-container";
-        devContainer.style.position = "fixed";
-        devContainer.style.bottom = "12px";
-        devContainer.style.right = "12px";
-        devContainer.style.zIndex = "99999";
-        devContainer.style.display = "flex";
-        devContainer.style.flexWrap = "wrap";
-        devContainer.style.gap = "6px";
-        devContainer.style.maxWidth = "320px";
-
-        const createDevButton = (text, bg, onClick) => {
-            const btn = document.createElement("button");
-            btn.innerText = text;
-            btn.style.background = bg;
-            btn.style.color = "#ffffff";
-            btn.style.border = "1px solid rgba(255,255,255,0.3)";
-            btn.style.padding = "6px 10px";
-            btn.style.borderRadius = "6px";
-            btn.style.cursor = "pointer";
-            btn.style.fontFamily = "'Poppins', sans-serif";
-            btn.style.fontWeight = "600";
-            btn.style.fontSize = "11px";
-            btn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
-            btn.style.transition = "all 0.2s ease";
-            btn.addEventListener("click", onClick);
-            return btn;
-        };
-
-        // Button 1: Reset test state
-        const devResetBtn = createDevButton("DEV: RESET TEST", "#d32f2f", () => {
-            console.log("[Majlis DEV] Reset action triggered.");
-            clearLocalState();
-            initializeReward();
-            applyRewardToDOM();
-
-            if (customerForm) {
-                customerForm.reset();
-                [inputName, inputMobile, inputEmail].forEach(input => {
-                    if (input) input.classList.remove("invalid");
-                });
-            }
-
-            isInstagramClicked = false;
-            if (btnSubmitForm) {
-                btnSubmitForm.disabled = true;
-                btnSubmitForm.classList.add("btn-locked");
-                const btnText = btnSubmitForm.querySelector(".btn-text");
-                if (btnText && sessionReward) {
-                    btnText.innerText = sessionReward.isWinner
-                        ? "CLAIM OFFER"
-                        : "SUBMIT DETAILS";
-                }
-            }
-
-            if (instagramInitialState) instagramInitialState.classList.remove("hidden");
-            if (instagramSuccessState) instagramSuccessState.classList.add("hidden");
-            if (instagramStatusText) {
-                instagramStatusText.innerText = "Instagram step required *";
-                instagramStatusText.classList.remove("verified");
-            }
-
-            if (isClaimedState()) {
-                showScreen(screenSuccess);
-            } else {
-                showScreen(screenScratch);
-                initScratchCanvas();
-            }
-        });
-
-        // Button 2: Auto-reveal scratch card
-        const devRevealBtn = createDevButton("DEV: AUTO REVEAL 🎁", "#2e7d32", () => {
-            console.log("[Majlis DEV] Auto reveal triggered.");
-            showScreen(screenScratch);
-            revealOffer();
-        });
-
-        // Button 3: Switch offer reward
-        const devSwitchBtn = createDevButton("DEV: SWITCH OFFER 🔄", "#e65c00", () => {
-            if (!REWARD_POOL || REWARD_POOL.length === 0) return;
-            const currentIdx = REWARD_POOL.findIndex(r => r.id === (sessionReward ? sessionReward.id : ""));
-            const nextIdx = (currentIdx + 1) % REWARD_POOL.length;
-            sessionReward = REWARD_POOL[nextIdx];
-            try {
-                localStorage.setItem(getRewardStorageKey(), sessionReward.id);
-            } catch (e) {}
-            applyRewardToDOM();
-            console.log("[Majlis DEV] Switched offer reward to:", sessionReward.label);
-        });
-
-        devContainer.appendChild(devResetBtn);
-        devContainer.appendChild(devRevealBtn);
-        devContainer.appendChild(devSwitchBtn);
-
-        // Button 4: Expire 10-day offer simulation
-        const devExpireBtn = createDevButton("DEV: EXPIRE 10D OFFER ⏰", "#d32f2f", () => {
-            console.log("[Majlis DEV] 10-day offer expiration simulation triggered.");
-            const pastTimestamp = Date.now() - (TEN_DAYS_MS + 60000);
-            try {
-                localStorage.setItem(getClaimedStorageKey(), "true");
-                localStorage.setItem(getClaimedAtStorageKey(), pastTimestamp.toString());
-            } catch (e) {}
-            showScreen(screenSuccess);
-        });
-
-        devContainer.appendChild(devExpireBtn);
-        document.body.appendChild(devContainer);
     }
 });
