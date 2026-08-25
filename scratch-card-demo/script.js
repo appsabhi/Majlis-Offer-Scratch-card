@@ -14,7 +14,7 @@ const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyXm_94jL
 // ==========================================================================
 const REWARD_POOL = [
     { id: "offer20",      label: "21% OFF",              coupon: "ONAM20",   isWinner: true  },
-    { id: "offerDessert", label: "₹199 for Unlimited Mandhi",         coupon: "ONAMDESS", isWinner: true  },
+    { id: "offerDessert", label: `₹174 <br> for Unlimited <br> Mandi (qtr)`,         coupon: "ONAMDESS", isWinner: true  },
     // { id: "betterLuck",   label: "Better Luck Next Time",coupon: null,       isWinner: false }
 ];
 
@@ -22,7 +22,8 @@ const REWARD_POOL = [
 let sessionReward = null;
 
 const VISITOR_KEY = "majlis_campaign_visitor_id";
-const DEV_MODE = false;
+// DEV_MODE is enabled for testing (can also be activated via ?dev=true in URL or on localhost)
+const DEV_MODE = true || window.location.search.includes("dev=true") || window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
 let visitorId = null;
 
@@ -37,6 +38,8 @@ function generateVisitorId() {
     }
     return result;
 }
+
+const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
 
 /**
  * Helper to get the reward storage key for the current visitor.
@@ -60,6 +63,13 @@ function getClaimedStorageKey() {
 }
 
 /**
+ * Helper to get the claimed timestamp storage key for the current visitor.
+ */
+function getClaimedAtStorageKey() {
+    return `majlis_campaign_claimed_at_${visitorId || "fallback"}`;
+}
+
+/**
  * Checks whether the visitor has successfully claimed their reward.
  */
 function isClaimedState() {
@@ -72,12 +82,101 @@ function isClaimedState() {
 }
 
 /**
- * Persists the successfully claimed state for the visitor.
+ * Checks whether 10 days have passed since the visitor claimed their offer.
+ */
+function isOfferExpired() {
+    try {
+        const claimedAtStr = localStorage.getItem(getClaimedAtStorageKey());
+        if (!claimedAtStr) return false;
+        const claimedAt = Number(claimedAtStr);
+        if (isNaN(claimedAt) || claimedAt <= 0) return false;
+        return (Date.now() - claimedAt) >= TEN_DAYS_MS;
+    } catch (e) {
+        console.warn("[Majlis] Error checking offer expiration:", e);
+        return false;
+    }
+}
+
+/**
+ * Updates the Success screen UI elements based on the 10-day validity status.
+ */
+function updateExpiryUI() {
+    const expired = isOfferExpired();
+    
+    const successTitleEl = document.querySelector(".success-title");
+    const successIconWrapper = document.querySelector(".success-icon-wrapper");
+    const ticketValidityPhrase = document.getElementById("ticket-validity-phrase");
+    const ticketHeader = document.querySelector(".ticket-header");
+    const ticketCard = document.querySelector(".ticket-card");
+    const ticketInstaInstruction = document.getElementById("ticket-instagram-instruction");
+
+    if (expired) {
+        if (successTitleEl) {
+            successTitleEl.innerText = "SORRY, YOU JUST MISSED IT!";
+            successTitleEl.style.color = "#a82e2e";
+        }
+        if (successIconWrapper) {
+            successIconWrapper.style.background = "rgba(168, 46, 46, 0.1)";
+            successIconWrapper.style.color = "#a82e2e";
+            successIconWrapper.innerHTML = `<span style="font-size: 30px; line-height: 1; display: inline-block;">😟</span>`;
+        }
+        if (ticketHeader) {
+            ticketHeader.innerText = "OFFER EXPIRED ";
+            ticketHeader.style.background = "linear-gradient(135deg, #a82e2e 0%, #d32f2f 100%)";
+            ticketHeader.style.color = "#ffffff";
+        }
+        if (ticketValidityPhrase) {
+            ticketValidityPhrase.innerHTML = `
+              
+                This offer was valid for 10 days and has now expired.`;
+        }
+        if (ticketCard) {
+            ticketCard.style.borderColor = "rgba(168, 46, 46, 0.4)";
+        }
+        if (ticketInstaInstruction) {
+            ticketInstaInstruction.style.display = "none";
+        }
+    } else {
+        if (successTitleEl) {
+            successTitleEl.innerText = "Offer Successfully Claimed!";
+            successTitleEl.style.color = "";
+        }
+        if (successIconWrapper) {
+            successIconWrapper.style.background = "";
+            successIconWrapper.style.color = "";
+            successIconWrapper.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="success-svg">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>`;
+        }
+        if (ticketHeader) {
+            ticketHeader.innerText = "";
+            ticketHeader.style.background = "";
+            ticketHeader.style.color = "";
+        }
+        if (ticketValidityPhrase) {
+            ticketValidityPhrase.innerText = "GRAB YOUR OFFER - VALID ONLY FOR 10 DAYS!";
+        }
+        if (ticketCard) {
+            ticketCard.style.borderColor = "";
+        }
+        if (ticketInstaInstruction) {
+            ticketInstaInstruction.style.display = "flex";
+        }
+    }
+}
+
+/**
+ * Persists the successfully claimed state and claim timestamp for the visitor.
  */
 function setClaimedState() {
     try {
+        const now = Date.now();
         localStorage.setItem(getClaimedStorageKey(), "true");
-        console.log("[Majlis] Persisted claimed success state for visitor:", visitorId);
+        if (!localStorage.getItem(getClaimedAtStorageKey())) {
+            localStorage.setItem(getClaimedAtStorageKey(), now.toString());
+        }
+        console.log("[Majlis] Persisted claimed success state for visitor:", visitorId, "| Claimed at:", new Date(now).toLocaleString());
     } catch (e) {
         console.warn("[Majlis] Error persisting claimed state:", e);
     }
@@ -92,6 +191,7 @@ function clearLocalState() {
             localStorage.removeItem(getRewardStorageKey());
             localStorage.removeItem(getRevealedStorageKey());
             localStorage.removeItem(getClaimedStorageKey());
+            localStorage.removeItem(getClaimedAtStorageKey());
             console.log("[Majlis] Cleared local campaign state for visitor:", visitorId);
         }
     } catch (e) {
@@ -147,6 +247,14 @@ function initializeReward() {
 }
 
 /**
+ * Strips HTML tags (like <br>) from a label string for clean plain-text output.
+ */
+function stripHtml(htmlStr) {
+    if (!htmlStr) return "";
+    return htmlStr.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+/**
  * Writes the assigned sessionReward into every DOM element that
  * displays the offer label or coupon code.
  * Must be called ONCE after selectSessionReward(), before any user interaction.
@@ -166,12 +274,12 @@ function applyRewardToDOM() {
     // Form submit button text
     const btnSubmitTextEl     = document.querySelector("#btn-submit-form .btn-text");
 
-    if (offerAmountEl)       offerAmountEl.innerText       = r.label;
-    if (overlayOfferEl)      overlayOfferEl.innerText      = r.label;
-    if (congratsOfferAmtEl)  congratsOfferAmtEl.innerText  = r.label;
-    if (ticketPercentEl)     ticketPercentEl.innerText     = r.label;
+    if (offerAmountEl)       offerAmountEl.innerHTML       = r.label;
+    if (overlayOfferEl)      overlayOfferEl.innerHTML      = r.label;
+    if (congratsOfferAmtEl)  congratsOfferAmtEl.innerHTML  = r.label;
+    if (ticketPercentEl)     ticketPercentEl.innerHTML     = r.label;
     if (btnSubmitTextEl)     btnSubmitTextEl.innerText     = r.isWinner
-        ? "CLAIM MY " + r.label.toUpperCase()
+        ? "CLAIM OFFER"
         : "SUBMIT DETAILS";
 
     // Reveal layer headers & badge
@@ -283,6 +391,26 @@ document.addEventListener("DOMContentLoaded", () => {
     let isConfettiRunning = false;
     let confettiAnimationId = null;
 
+    /**
+     * Instantly positions viewport at the card section without any visible scrolling animation.
+     */
+    function scrollToCard(targetScreen) {
+        const target = targetScreen || document.querySelector(".screen-card.active");
+        if (!target) return;
+        
+        const cardEl = target.querySelector(".scratch-card-outer, .form-ticket-card, .ticket-card, .congrats-step-card") || target;
+        if (cardEl) {
+            const rect = cardEl.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const targetTop = rect.top + scrollTop - 16;
+            
+            window.scrollTo({
+                top: Math.max(0, targetTop),
+                behavior: "instant"
+            });
+        }
+    }
+
     // ==========================================================================
     // 1. SCREEN TRANSITION CONTROLLER
     // ==========================================================================
@@ -300,6 +428,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 s.classList.add("hidden");
             }
         });
+
+        if (targetScreen === screenSuccess) {
+            updateExpiryUI();
+        }
+
+        // Instantly focus the card section without visible scrolling animation
+        scrollToCard(targetScreen);
     }
 
     // ==========================================================================
@@ -726,10 +861,10 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         
         // Use the session reward directly — single source of truth, never re-reads DOM
-        const offerVal  = sessionReward ? sessionReward.label  : "Unknown";
+        const offerVal  = sessionReward ? stripHtml(sessionReward.label) : "Unknown";
         const couponVal = sessionReward ? (sessionReward.coupon || "") : "";
         
-        const dynamicBtnText = "CLAIM MY " + offerVal.toUpperCase();
+        const dynamicBtnText = (sessionReward && sessionReward.isWinner) ? "CLAIM OFFER" : "SUBMIT DETAILS";
 
         let isValid = true;
 
@@ -767,13 +902,39 @@ document.addEventListener("DOMContentLoaded", () => {
         btnText.innerText = "Submitting...";
         formLoader.classList.remove("hidden");
 
+        const now = new Date();
+        const formattedClaimDateTime = now.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric"
+        }) + ", " + now.toLocaleTimeString("en-IN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true
+        });
+
+        const nameVal = inputName.value.trim();
+        const mobileValFinal = inputMobile.value.trim();
+        const emailValFinal = emailVal !== "" ? emailVal : "Not Provided";
+
+        // Google Sheets Payload: Exactly 5 values in exact order A:E (Full Name, Mobile Number, Email, Offer, Claim Date & Time)
         const claimPayload = {
-            fullName: inputName.value.trim(),
-            mobile: inputMobile.value.trim(),
-            mobileNumber: inputMobile.value.trim(), // Defensively send both mobile and mobileNumber
-            email: emailVal !== "" ? emailVal : "Not Provided",
+            fullName: nameVal,
+            mobileNumber: mobileValFinal,
+            email: emailValFinal,
             offer: offerVal,
-            couponCode: couponVal
+            claimDateTime: formattedClaimDateTime,
+
+            // Clean 5-element row array matching A:E
+            row: [nameVal, mobileValFinal, emailValFinal, offerVal, formattedClaimDateTime],
+            data: [nameVal, mobileValFinal, emailValFinal, offerVal, formattedClaimDateTime],
+
+            // Header-matched keys
+            "Full Name": nameVal,
+            "Mobile Number": mobileValFinal,
+            "Email": emailValFinal,
+            "Offer": offerVal,
+            "Claim Date & Time": formattedClaimDateTime
         };
 
         // Fallback simulation check if URL is the default placeholder (for local test safety)
@@ -1037,24 +1198,30 @@ document.addEventListener("DOMContentLoaded", () => {
         devContainer.style.right = "12px";
         devContainer.style.zIndex = "99999";
         devContainer.style.display = "flex";
-        devContainer.style.gap = "8px";
+        devContainer.style.flexWrap = "wrap";
+        devContainer.style.gap = "6px";
+        devContainer.style.maxWidth = "320px";
 
-        const devResetBtn = document.createElement("button");
-        devResetBtn.id = "dev-reset-btn";
-        devResetBtn.innerText = "DEV: RESET TEST";
-        devResetBtn.style.background = "#d32f2f";
-        devResetBtn.style.color = "#ffffff";
-        devResetBtn.style.border = "1px solid rgba(255,255,255,0.3)";
-        devResetBtn.style.padding = "8px 12px";
-        devResetBtn.style.borderRadius = "6px";
-        devResetBtn.style.cursor = "pointer";
-        devResetBtn.style.fontFamily = "'Poppins', sans-serif";
-        devResetBtn.style.fontWeight = "600";
-        devResetBtn.style.fontSize = "11px";
-        devResetBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
-        devResetBtn.style.transition = "background-color 0.2s ease";
+        const createDevButton = (text, bg, onClick) => {
+            const btn = document.createElement("button");
+            btn.innerText = text;
+            btn.style.background = bg;
+            btn.style.color = "#ffffff";
+            btn.style.border = "1px solid rgba(255,255,255,0.3)";
+            btn.style.padding = "6px 10px";
+            btn.style.borderRadius = "6px";
+            btn.style.cursor = "pointer";
+            btn.style.fontFamily = "'Poppins', sans-serif";
+            btn.style.fontWeight = "600";
+            btn.style.fontSize = "11px";
+            btn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.4)";
+            btn.style.transition = "all 0.2s ease";
+            btn.addEventListener("click", onClick);
+            return btn;
+        };
 
-        devResetBtn.addEventListener("click", () => {
+        // Button 1: Reset test state
+        const devResetBtn = createDevButton("DEV: RESET TEST", "#d32f2f", () => {
             console.log("[Majlis DEV] Reset action triggered.");
             clearLocalState();
             initializeReward();
@@ -1074,7 +1241,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const btnText = btnSubmitForm.querySelector(".btn-text");
                 if (btnText && sessionReward) {
                     btnText.innerText = sessionReward.isWinner
-                        ? "CLAIM MY " + sessionReward.label.toUpperCase()
+                        ? "CLAIM OFFER"
                         : "SUBMIT DETAILS";
                 }
             }
@@ -1094,7 +1261,42 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
+        // Button 2: Auto-reveal scratch card
+        const devRevealBtn = createDevButton("DEV: AUTO REVEAL 🎁", "#2e7d32", () => {
+            console.log("[Majlis DEV] Auto reveal triggered.");
+            showScreen(screenScratch);
+            revealOffer();
+        });
+
+        // Button 3: Switch offer reward
+        const devSwitchBtn = createDevButton("DEV: SWITCH OFFER 🔄", "#e65c00", () => {
+            if (!REWARD_POOL || REWARD_POOL.length === 0) return;
+            const currentIdx = REWARD_POOL.findIndex(r => r.id === (sessionReward ? sessionReward.id : ""));
+            const nextIdx = (currentIdx + 1) % REWARD_POOL.length;
+            sessionReward = REWARD_POOL[nextIdx];
+            try {
+                localStorage.setItem(getRewardStorageKey(), sessionReward.id);
+            } catch (e) {}
+            applyRewardToDOM();
+            console.log("[Majlis DEV] Switched offer reward to:", sessionReward.label);
+        });
+
         devContainer.appendChild(devResetBtn);
+        devContainer.appendChild(devRevealBtn);
+        devContainer.appendChild(devSwitchBtn);
+
+        // Button 4: Expire 10-day offer simulation
+        const devExpireBtn = createDevButton("DEV: EXPIRE 10D OFFER ⏰", "#d32f2f", () => {
+            console.log("[Majlis DEV] 10-day offer expiration simulation triggered.");
+            const pastTimestamp = Date.now() - (TEN_DAYS_MS + 60000);
+            try {
+                localStorage.setItem(getClaimedStorageKey(), "true");
+                localStorage.setItem(getClaimedAtStorageKey(), pastTimestamp.toString());
+            } catch (e) {}
+            showScreen(screenSuccess);
+        });
+
+        devContainer.appendChild(devExpireBtn);
         document.body.appendChild(devContainer);
     }
 });

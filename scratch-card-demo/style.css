@@ -37,12 +37,20 @@
 }
 
 /* Base Styles & Resets */
+html {
+    scroll-behavior: auto;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
     outline: none;
     -webkit-tap-highlight-color: transparent;
+}
+
+.screen-card, .scratch-card-outer, .form-ticket-card, .ticket-card, .congrats-step-card {
+    scroll-margin-top: 16px;
 }
 
 body {
@@ -56,9 +64,9 @@ body {
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     overflow-x: hidden;
-    padding: 16px;
+    padding: 16px 12px 24px 12px;
     position: relative;
 }
 
@@ -81,18 +89,42 @@ body::before {
 .global-header {
     width: 100%;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-top: 16px;
-    margin-bottom: 18px;
+    margin-top: 4px;
+    margin-bottom: 8px;
     padding: 0 16px;
+    gap: 6px;
 }
 
 .global-logo {
-    height:120px;
+    height: 64px;
+    max-height: 64px;
+    max-width: 80%;
     object-fit: contain;
     width: auto;
+    display: block;
+    margin: 0 auto;
     filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.18));
+}
+
+.campaign-logo-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 0;
+}
+
+.campaign-call-logo {
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+    filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.22));
 }
 
 .monogram-container {
@@ -112,7 +144,11 @@ body::before {
 /* App Container Layout */
 .app-container {
     width: 100%;
-    max-width: 440px;
+    max-width: 480px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     position: relative;
     z-index: 5;
     perspective: 1000px;
@@ -336,9 +372,10 @@ body::before {
     border: 1px solid var(--festive-gold);
     border-radius: 12px;
     width: 350px;
+    max-width: 100%;
     height: auto;
     min-height: 410px;
-    margin: 0 auto 24px auto;
+    margin: 0 auto 16px auto;
     box-shadow: var(--shadow-soft);
     position: relative;
     display: flex;
@@ -480,10 +517,11 @@ body::before {
 
 .offer-amount {
     font-family: var(--font-heading);
-    font-size: 34px;
+    font-size: 26px;
     font-weight: 700;
     color: var(--color-gold-dark);
-    line-height: 1;
+    line-height: 1.15;
+    text-align: center;
     margin-bottom: 14px;
     text-shadow: 1px 1px 0px rgba(0,0,0,0.02);
     background: var(--gold-text-gradient);
@@ -588,28 +626,32 @@ body::before {
 .form-ticket-card {
     background: var(--white);
     border: 1px solid var(--festive-gold);
-    border-radius: 12px;
+    border-radius: 16px;
     width: 100%;
-    margin-bottom: 20px;
+    max-width: 480px;
+    margin: 0 auto 20px auto;
     overflow: hidden;
     position: relative;
-    box-shadow: var(--shadow-soft);
+    box-shadow: var(--shadow-medium);
 }
 
 .form-ticket-header {
     background: var(--gold-gradient);
     color: var(--color-green-deep);
     font-family: var(--font-heading);
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 800;
     letter-spacing: 1.5px;
-    padding: 6px 12px;
+    padding: 10px 14px;
     text-align: center;
     text-transform: uppercase;
 }
 
 .form-ticket-body {
-    padding: 24px 20px;
+    padding: 32px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 .form-monogram {
@@ -627,35 +669,36 @@ body::before {
 
 .form-title {
     font-family: var(--font-heading);
-    font-size: 16px;
+    font-size: 17px;
     font-weight: 700;
     text-align: center;
     color: var(--color-green-deep);
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
 
 .form-subtitle {
     font-family: var(--font-primary);
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
     text-align: center;
     line-height: 1.5;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
+    width: 350px;
 }
 
 .form-divider {
     height: 1px;
     background: linear-gradient(to right, transparent, rgba(197, 160, 89, 0.25) 20%, rgba(197, 160, 89, 0.25) 80%, transparent);
-    margin: 14px 0;
+    margin: 18px 0;
     width: 100%;
 }
 
 #customer-form {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 16px;
     width: 100%;
 }
 
@@ -668,7 +711,7 @@ body::before {
 
 .input-label {
     font-family: var(--font-primary);
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--color-green-deep);
     text-transform: uppercase;
@@ -684,10 +727,10 @@ body::before {
     width: 100%;
     background: #fdfbf7;
     border: 1px solid rgba(197, 160, 89, 0.35);
-    border-radius: 8px;
-    padding: 10px 14px;
+    border-radius: 10px;
+    padding: 12px 16px;
     font-family: var(--font-primary);
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-dark);
     transition: all 0.25s ease;
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.01);
@@ -707,7 +750,7 @@ body::before {
 .error-message {
     display: none;
     color: var(--error);
-    font-size: 10px;
+    font-size: 11px;
     margin-top: 4px;
     font-weight: 500;
 }
@@ -718,10 +761,10 @@ body::before {
 
 .form-security-text {
     font-family: var(--font-primary);
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-muted);
     text-align: center;
-    margin-top: 10px;
+    margin-top: 14px;
     letter-spacing: 0.25px;
 }
 
@@ -792,6 +835,47 @@ body::before {
 
 .ticket-body {
     padding: 16px 20px;
+}
+
+.ticket-instagram-instruction {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(197, 160, 89, 0.25);
+    gap: 3px;
+}
+
+.ticket-instagram-instruction .insta-text-line {
+    font-family: var(--font-primary);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    line-height: 1.35;
+}
+
+.ticket-instagram-instruction .insta-handle-link {
+    font-family: var(--font-heading);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-green-deep);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition: color 0.2s ease;
+    margin: 2px 0;
+}
+
+.ticket-instagram-instruction .insta-handle-link:hover {
+    color: var(--color-gold-dark);
+}
+
+.ticket-instagram-instruction .insta-icon {
+    color: var(--color-gold-dark);
 }
 
 .ticket-percent {
@@ -1256,10 +1340,11 @@ body::before {
 
 .congrats-overlay-offer {
     font-family: var(--font-heading);
-    font-size: 34px;
+    font-size: 24px;
     font-weight: 850;
     color: var(--color-gold-dark);
-    line-height: 1;
+    line-height: 1.15;
+    text-align: center;
     margin-bottom: 8px;
     text-shadow: 1px 1px 0px rgba(0,0,0,0.02);
     background: var(--gold-text-gradient);
@@ -1308,11 +1393,28 @@ body::before {
 
 /* Mobile scratch card alignment fix */
 @media (max-width: 600px) {
+    .global-header {
+        margin-top: 0;
+        margin-bottom: 6px;
+        gap: 4px;
+    }
+
+    .global-logo {
+        height: 52px;
+        max-height: 52px;
+        max-width: 75%;
+    }
+
+    .campaign-call-logo {
+        max-width: min(280px, 85vw);
+    }
+
     .scratch-card-outer {
         width: calc(100vw - 32px);
         max-width: 350px;
         margin-left: auto;
         margin-right: auto;
+        margin-bottom: 14px;
         box-sizing: border-box;
     }
 
@@ -1330,13 +1432,17 @@ body::before {
         height: 100% !important;
         display: block;
     }
+
+    .global-footer {
+        margin-top: 14px;
+    }
 }
 
 /* Premium Global Footer — Arabian Majlis Signature */
 .global-footer {
     width: 100%;
-    margin-top: 36px;
-    padding-bottom: 24px;
+    margin-top: 20px;
+    padding-bottom: 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
