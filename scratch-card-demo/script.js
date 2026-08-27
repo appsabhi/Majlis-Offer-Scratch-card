@@ -915,23 +915,24 @@ document.addEventListener("DOMContentLoaded", () => {
         const mobileValFinal = inputMobile.value.trim();
         const emailValFinal = emailVal !== "" ? emailVal : "Not Provided";
 
-        // Google Sheets Payload: Exactly 5 values in exact order A:E (Full Name, Mobile Number, Email, Offer, Claim Date & Time)
+        // Google Sheets Payload: Exactly matched keys & fallbacks for Google Apps Script
         const claimPayload = {
             fullName: nameVal,
             mobileNumber: mobileValFinal,
             email: emailValFinal,
             offer: offerVal,
+            couponCode: couponVal,
             claimDateTime: formattedClaimDateTime,
 
-            // Clean 5-element row array matching A:E
-            row: [nameVal, mobileValFinal, emailValFinal, offerVal, formattedClaimDateTime],
-            data: [nameVal, mobileValFinal, emailValFinal, offerVal, formattedClaimDateTime],
-
-            // Header-matched keys
+            // Fallback aliases for maximum server script compatibility
+            name: nameVal,
+            mobile: mobileValFinal,
+            phone: mobileValFinal,
             "Full Name": nameVal,
             "Mobile Number": mobileValFinal,
             "Email": emailValFinal,
             "Offer": offerVal,
+            "Coupon Code": couponVal,
             "Claim Date & Time": formattedClaimDateTime
         };
 
