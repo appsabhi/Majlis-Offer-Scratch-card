@@ -144,7 +144,7 @@ body::before {
 /* App Container Layout */
 .app-container {
     width: 100%;
-    max-width: 480px;
+    max-width: 540px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -370,11 +370,10 @@ body::before {
 .scratch-card-outer {
     background: var(--white);
     border: 1px solid var(--festive-gold);
-    border-radius: 12px;
-    width: 350px;
-    max-width: 100%;
+    border-radius: 18px;
+    width: 100%;
+    max-width: 380px;
     height: auto;
-    min-height: 410px;
     margin: 0 auto 16px auto;
     box-shadow: var(--shadow-soft);
     position: relative;
@@ -382,25 +381,28 @@ body::before {
     flex-direction: column;
     align-items: stretch;
     overflow: hidden;
+    box-sizing: border-box;
 }
 
 .scratch-card-header {
     background: var(--gold-gradient);
     color: var(--color-green-deep);
     font-family: var(--font-heading);
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 800;
     letter-spacing: 1.5px;
-    padding: 6px 12px;
+    padding: 7px 12px;
     text-align: center;
     text-transform: uppercase;
 }
 
 .scratch-card-body {
-    padding: 16px 20px 12px 20px;
+    padding: 20px 20px 18px 20px;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .card-supporting-phrase {
@@ -421,42 +423,47 @@ body::before {
 }
 
 .card-monogram .monogram-icon {
-    height: 24px;
+    height: 26px;
     object-fit: contain;
     width: auto;
 }
 
 .card-campaign-title {
     font-family: var(--font-heading);
-    font-size: 17px;
+    font-size: clamp(15px, 4.5vw, 18px);
     font-weight: 700;
     color: var(--color-green-deep);
     text-align: center;
     letter-spacing: 1px;
     margin-bottom: 4px;
     text-transform: uppercase;
+    line-height: 1.2;
 }
 
 .card-campaign-subtitle {
     font-family: var(--font-primary);
-    font-size: 10px;
+    font-size: clamp(9.5px, 2.8vw, 11px);
     color: var(--text-muted);
     text-align: center;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    line-height: 1.35;
+    padding: 0 4px;
 }
 
 .scratch-card-inner {
-    width: 250px; /* Restrict width to avoid horizontal stretching */
-    height: 250px; /* Keep it square (1:1) to match canvas buffer ratio */
-    margin: 0 auto 12px auto; /* Centered with equal visual spacing on left/right */
+    width: min(260px, 100%);
+    aspect-ratio: 1 / 1;
+    height: auto;
+    margin: 6px auto 12px auto;
     position: relative;
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
     background: var(--color-green-deep);
     border: 1px solid var(--color-gold);
     box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
 }
 
 /* The revealed offer layer behind canvas */
@@ -626,9 +633,9 @@ body::before {
 .form-ticket-card {
     background: var(--white);
     border: 1px solid var(--festive-gold);
-    border-radius: 16px;
+    border-radius: 18px;
     width: 100%;
-    max-width: 480px;
+    max-width: 520px;
     margin: 0 auto 20px auto;
     overflow: hidden;
     position: relative;
@@ -642,13 +649,13 @@ body::before {
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 1.5px;
-    padding: 10px 14px;
+    padding: 9px 14px;
     text-align: center;
     text-transform: uppercase;
 }
 
 .form-ticket-body {
-    padding: 32px 28px;
+    padding: 44px 44px 38px 44px;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -658,7 +665,7 @@ body::before {
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .form-monogram .monogram-icon {
@@ -669,11 +676,11 @@ body::before {
 
 .form-title {
     font-family: var(--font-heading);
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 700;
     text-align: center;
     color: var(--color-green-deep);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
@@ -683,29 +690,30 @@ body::before {
     font-size: 12px;
     color: var(--text-muted);
     text-align: center;
-    line-height: 1.5;
-    margin-bottom: 18px;
-    width: 350px;
+    line-height: 1.45;
+    margin: 0 auto 10px auto;
+    width: 100%;
+    max-width: 380px;
 }
 
 .form-divider {
     height: 1px;
     background: linear-gradient(to right, transparent, rgba(197, 160, 89, 0.25) 20%, rgba(197, 160, 89, 0.25) 80%, transparent);
-    margin: 18px 0;
+    margin: 12px 0;
     width: 100%;
 }
 
 #customer-form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     width: 100%;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
     width: 100%;
 }
 
@@ -715,7 +723,7 @@ body::before {
     font-weight: 600;
     color: var(--color-green-deep);
     text-transform: uppercase;
-    letter-spacing: 0.75px;
+    letter-spacing: 0.6px;
 }
 
 .input-field-wrapper {
@@ -727,8 +735,8 @@ body::before {
     width: 100%;
     background: #fdfbf7;
     border: 1px solid rgba(197, 160, 89, 0.35);
-    border-radius: 10px;
-    padding: 12px 16px;
+    border-radius: 9px;
+    padding: 11px 15px;
     font-family: var(--font-primary);
     font-size: 14px;
     color: var(--text-dark);
@@ -750,8 +758,8 @@ body::before {
 .error-message {
     display: none;
     color: var(--error);
-    font-size: 11px;
-    margin-top: 4px;
+    font-size: 10.5px;
+    margin-top: 2px;
     font-weight: 500;
 }
 
@@ -764,7 +772,7 @@ body::before {
     font-size: 11px;
     color: var(--text-muted);
     text-align: center;
-    margin-top: 14px;
+    margin-top: 10px;
     letter-spacing: 0.25px;
 }
 
@@ -1112,32 +1120,196 @@ body::before {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Screen Size Specific Responsiveness */
+/* ==========================================================================
+   RESPONSIVE DESIGN BREAKPOINTS & MOBILE OPTIMIZATIONS
+   ========================================================================== */
+
+/* Mobile Devices (< 480px) */
 @media (max-width: 480px) {
     body {
-        padding: 12px;
+        padding: 10px 10px 20px 10px;
     }
-    .screen-card {
-        padding: 24px 16px 20px 16px;
-        border-radius: 20px;
+
+    .app-container {
+        padding: 0 4px;
     }
-    .campaign-title {
-        font-size: 18px;
+
+    .global-header {
+        margin-top: 2px;
+        margin-bottom: 8px;
+        gap: 4px;
+        padding: 0 8px;
     }
+
+    .global-logo {
+        height: 52px;
+        max-height: 52px;
+        max-width: 80%;
+    }
+
+    .campaign-call-logo {
+        max-width: min(290px, 86vw);
+    }
+
     .scratch-card-outer {
-        width: 280px;
-        height: 280px;
+        width: 100%;
+        max-width: 350px;
+        border-radius: 16px;
+        margin-bottom: 14px;
+    }
+
+    .form-ticket-card {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 16px;
+        margin-bottom: 14px;
+    }
+
+    .scratch-card-body {
+        padding: 18px 16px 16px 16px;
+    }
+
+    .scratch-card-inner {
+        width: min(240px, 100%);
+        aspect-ratio: 1 / 1;
+        height: auto;
+        margin: 6px auto 12px auto;
+    }
+
+    .scratch-card-inner canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+
+    .congrats-overlay {
         padding: 12px;
     }
-    .offer-amount {
-        font-size: 32px;
+
+    .form-ticket-body {
+        padding: 32px 24px 28px 24px;
+    }
+
+    .input-field {
+        font-size: 16px; /* Prevents auto-zoom on mobile Safari */
+        padding: 9px 12px;
+    }
+
+    .ticket-body {
+        padding: 16px 14px;
+    }
+
+    .global-footer {
+        margin-top: 14px;
+        padding-bottom: 20px;
     }
 }
 
-@media (min-width: 768px) {
-    /* Slightly relax limits on tablet / desktop */
+/* Extra Small Devices (< 360px) */
+@media (max-width: 360px) {
+    body {
+        padding: 6px 6px 16px 6px;
+    }
+
+    .scratch-card-body {
+        padding: 14px 12px 12px 12px;
+    }
+
+    .card-campaign-title {
+        font-size: 14px;
+    }
+
+    .card-campaign-subtitle {
+        font-size: 9px;
+    }
+
+    .scratch-card-inner {
+        width: min(210px, 100%);
+    }
+
+    .offer-amount, .congrats-overlay-offer {
+        font-size: 20px;
+    }
+}
+
+/* Tablets (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
     .app-container {
-        max-width: 460px;
+        max-width: 520px;
+    }
+
+    .scratch-card-outer {
+        max-width: 380px;
+    }
+
+    .form-ticket-card {
+        max-width: 500px;
+    }
+
+    .scratch-card-inner {
+        width: 250px;
+        height: 250px;
+    }
+}
+
+/* Desktop & Wide Screens (> 768px) */
+@media (min-width: 769px) {
+    body {
+        padding: 24px 16px 36px 16px;
+    }
+
+    .app-container {
+        max-width: 540px;
+    }
+
+    .scratch-card-outer {
+        max-width: 380px;
+    }
+
+    .form-ticket-card {
+        max-width: 520px;
+    }
+
+    .scratch-card-body {
+        padding: 22px 24px 18px 24px;
+    }
+
+    .scratch-card-inner {
+        width: 260px;
+        height: 260px;
+    }
+}
+
+/* Short Height / Landscape Viewports */
+@media (max-height: 650px) and (orientation: landscape) {
+    .global-header {
+        margin-bottom: 4px;
+    }
+
+    .global-logo {
+        height: 38px;
+    }
+
+    .campaign-call-logo {
+        max-width: 200px;
+    }
+
+    .scratch-card-outer {
+        max-width: 320px;
+    }
+
+    .scratch-card-body {
+        padding: 12px 14px;
+    }
+
+    .scratch-card-inner {
+        width: min(180px, 100%);
+        aspect-ratio: 1 / 1;
+        height: auto;
+        margin: 4px auto;
+    }
+
+    .offer-amount, .congrats-overlay-offer {
+        font-size: 18px;
     }
 }
 
@@ -1391,52 +1563,7 @@ body::before {
 
 
 
-/* Mobile scratch card alignment fix */
-@media (max-width: 600px) {
-    .global-header {
-        margin-top: 0;
-        margin-bottom: 6px;
-        gap: 4px;
-    }
 
-    .global-logo {
-        height: 52px;
-        max-height: 52px;
-        max-width: 75%;
-    }
-
-    .campaign-call-logo {
-        max-width: min(280px, 85vw);
-    }
-
-    .scratch-card-outer {
-        width: calc(100vw - 32px);
-        max-width: 350px;
-        margin-left: auto;
-        margin-right: auto;
-        margin-bottom: 14px;
-        box-sizing: border-box;
-    }
-
-    .scratch-card-inner {
-        width: 250px !important;
-        height: 250px !important;
-        max-width: calc(100% - 32px);
-        margin-left: auto !important;
-        margin-right: auto !important;
-        box-sizing: border-box;
-    }
-
-    .scratch-card-inner canvas {
-        width: 100% !important;
-        height: 100% !important;
-        display: block;
-    }
-
-    .global-footer {
-        margin-top: 14px;
-    }
-}
 
 /* Premium Global Footer — Arabian Majlis Signature */
 .global-footer {
