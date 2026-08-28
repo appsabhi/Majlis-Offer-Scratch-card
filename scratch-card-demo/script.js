@@ -3,8 +3,9 @@
    ========================================================================== */
 
 // --- CONFIGURATION SECTION ---
-// Copy the Web App URL from your deployed Google Apps Script and paste it below:
-const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyXm_94jLRyCPccQQ2bYxB6DjPveIW2Mh9YZ6dFIiHHfkJsKTHck2U8o1V2S41mDISssA/exec"
+const BACKEND_API_URL = "http://127.0.0.1:5000/api/claims";
+// Copy the Web App URL from your deployed Google Apps Script and paste it below (optional backup):
+const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyXm_94jLRyCPccQQ2bYxB6DjPveIW2Mh9YZ6dFIiHHfkJsKTHck2U8o1V2S41mDISssA/exec";
 // ==========================================================================
 // REWARD POOL CONFIGURATION
 // Add, remove, or edit offers here. Each entry must have:
@@ -21,7 +22,38 @@ const REWARD_POOL = [
 // Holds the ONE reward assigned for this session. Set once on page load.
 let sessionReward = null;
 
-const DEV_MODE = false;
+const DEV_MODE = true;
+
+const VISITOR_KEY = "majlis_visitor_id";
+
+// Safe Storage Helper with memory fallback for iOS Safari / Mobile Firefox Private Browsing
+const memoryStorage = {};
+const safeStorage = {
+    getItem(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            console.warn("[Majlis] Storage getItem fallback:", e);
+            return memoryStorage[key] || null;
+        }
+    },
+    setItem(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {
+            console.warn("[Majlis] Storage setItem fallback:", e);
+            memoryStorage[key] = String(value);
+        }
+    },
+    removeItem(key) {
+        try {
+            localStorage.removeItem(key);
+        } catch (e) {
+            console.warn("[Majlis] Storage removeItem fallback:", e);
+            delete memoryStorage[key];
+        }
+    }
+};
 
 let visitorId = null;
 
@@ -72,7 +104,7 @@ function getClaimedAtStorageKey() {
  */
 function isClaimedState() {
     try {
-        return localStorage.getItem(getClaimedStorageKey()) === "true";
+        return safeStorage.getItem(getClaimedStorageKey()) === "true";
     } catch (e) {
         console.warn("[Majlis] Error reading claimed state:", e);
         return false;
@@ -84,7 +116,7 @@ function isClaimedState() {
  */
 function isOfferExpired() {
     try {
-        const claimedAtStr = localStorage.getItem(getClaimedAtStorageKey());
+        const claimedAtStr = safeStorage.getItem(getClaimedAtStorageKey());
         if (!claimedAtStr) return false;
         const claimedAt = Number(claimedAtStr);
         if (isNaN(claimedAt) || claimedAt <= 0) return false;
@@ -170,9 +202,9 @@ function updateExpiryUI() {
 function setClaimedState() {
     try {
         const now = Date.now();
-        localStorage.setItem(getClaimedStorageKey(), "true");
-        if (!localStorage.getItem(getClaimedAtStorageKey())) {
-            localStorage.setItem(getClaimedAtStorageKey(), now.toString());
+        safeStorage.setItem(getClaimedStorageKey(), "true");
+        if (!safeStorage.getItem(getClaimedAtStorageKey())) {
+            safeStorage.setItem(getClaimedAtStorageKey(), now.toString());
         }
         console.log("[Majlis] Persisted claimed success state for visitor:", visitorId, "| Claimed at:", new Date(now).toLocaleString());
     } catch (e) {
@@ -186,10 +218,10 @@ function setClaimedState() {
 function clearLocalState() {
     try {
         if (visitorId) {
-            localStorage.removeItem(getRewardStorageKey());
-            localStorage.removeItem(getRevealedStorageKey());
-            localStorage.removeItem(getClaimedStorageKey());
-            localStorage.removeItem(getClaimedAtStorageKey());
+            safeStorage.removeItem(getRewardStorageKey());
+            safeStorage.removeItem(getRevealedStorageKey());
+            safeStorage.removeItem(getClaimedStorageKey());
+            safeStorage.removeItem(getClaimedAtStorageKey());
             console.log("[Majlis] Cleared local campaign state for visitor:", visitorId);
         }
     } catch (e) {
@@ -204,22 +236,22 @@ function clearLocalState() {
 function initializeReward() {
     // 1. Resolve or generate visitorId
     try {
-        visitorId = localStorage.getItem(VISITOR_KEY);
+        visitorId = safeStorage.getItem(VISITOR_KEY);
         if (!visitorId) {
             visitorId = generateVisitorId();
-            localStorage.setItem(VISITOR_KEY, visitorId);
+            safeStorage.setItem(VISITOR_KEY, visitorId);
             console.log("[Majlis] Generated new visitor identity:", visitorId);
         } else {
             console.log("[Majlis] Restored existing visitor identity:", visitorId);
         }
     } catch (e) {
-        console.warn("[Majlis] Error accessing localStorage for visitor identity:", e);
+        console.warn("[Majlis] Error accessing storage for visitor identity:", e);
         if (!visitorId) visitorId = "fallback";
     }
 
     // 2. Resolve existing reward or pick a new one for this visitor
     try {
-        const savedRewardId = localStorage.getItem(getRewardStorageKey());
+        const savedRewardId = safeStorage.getItem(getRewardStorageKey());
         if (savedRewardId) {
             const foundReward = REWARD_POOL.find(item => item.id === savedRewardId);
             if (foundReward) {
@@ -229,7 +261,7 @@ function initializeReward() {
             }
         }
     } catch (e) {
-        console.warn("[Majlis] Error accessing localStorage for saved reward:", e);
+        console.warn("[Majlis] Error accessing storage for saved reward:", e);
     }
 
     // Select a random reward from REWARD_POOL if none saved
@@ -237,10 +269,10 @@ function initializeReward() {
     sessionReward = REWARD_POOL[idx];
 
     try {
-        localStorage.setItem(getRewardStorageKey(), sessionReward.id);
+        safeStorage.setItem(getRewardStorageKey(), sessionReward.id);
         console.log("[Majlis] Assigned NEW reward for visitor:", sessionReward.label);
     } catch (e) {
-        console.warn("[Majlis] Error saving reward to localStorage:", e);
+        console.warn("[Majlis] Error saving reward to storage:", e);
     }
 }
 
@@ -442,7 +474,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Check if already revealed in persistent storage
         let savedRevealed = false;
         try {
-            savedRevealed = localStorage.getItem(getRevealedStorageKey()) === "true";
+            savedRevealed = safeStorage.getItem(getRevealedStorageKey()) === "true";
         } catch (e) {
             console.warn(e);
         }
@@ -603,7 +635,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function scratch(e) {
         if (!isDrawing || isRevealed) return;
-        e.preventDefault(); // Prevents dragging/scrolling on mobile devices
+        if (e.cancelable) e.preventDefault(); // Prevents dragging/scrolling on mobile devices
 
         const pos = getMousePos(e);
         
@@ -639,28 +671,32 @@ document.addEventListener("DOMContentLoaded", () => {
     function checkScratchPercentage() {
         if (isRevealed) return;
 
-        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const pixels = imgData.data;
-        const totalPixels = pixels.length / 4;
-        let transparentPixels = 0;
+        try {
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = imgData.data;
+            const totalPixels = pixels.length / 4;
+            let transparentPixels = 0;
 
-        // Optimize: Check every 8th pixel (32 bytes jump) for fast responsive calculations
-        for (let i = 3; i < pixels.length; i += 32) {
-            if (pixels[i] === 0) {
-                transparentPixels++;
+            // Optimize: Check every 8th pixel (32 bytes jump) for fast responsive calculations
+            for (let i = 3; i < pixels.length; i += 32) {
+                if (pixels[i] === 0) {
+                    transparentPixels++;
+                }
             }
-        }
 
-        // Multiplying back by 8 since we sampled 1/8th of pixels
-        const percentage = Math.min(((transparentPixels * 8) / totalPixels) * 100, 100);
-        
-        scratchProgress = Math.round(percentage);
-        progressBarFill.style.width = `${scratchProgress}%`;
-        scratchProgressText.innerText = `Scratch: ${scratchProgress}%`;
+            // Multiplying back by 8 since we sampled 1/8th of pixels
+            const percentage = Math.min(((transparentPixels * 8) / totalPixels) * 100, 100);
+            
+            scratchProgress = Math.round(percentage);
+            progressBarFill.style.width = `${scratchProgress}%`;
+            scratchProgressText.innerText = `Scratch: ${scratchProgress}%`;
 
-        // Reveal threshold reached
-        if (scratchProgress >= 50) {
-            revealOffer();
+            // Reveal threshold reached
+            if (scratchProgress >= 50) {
+                revealOffer();
+            }
+        } catch (err) {
+            console.warn("[Majlis] Error calculating scratch percentage:", err);
         }
     }
 
@@ -671,9 +707,9 @@ document.addEventListener("DOMContentLoaded", () => {
         progressBarFill.style.width = "100%";
         scratchProgressText.innerText = sessionReward.isWinner ? "Revealed! 🎉" : "Revealed! 🍀";
 
-        // Save scratch revealed state to localStorage
+        // Save scratch revealed state to safeStorage
         try {
-            localStorage.setItem(getRevealedStorageKey(), "true");
+            safeStorage.setItem(getRevealedStorageKey(), "true");
         } catch (e) {
             console.warn(e);
         }
@@ -711,15 +747,28 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Attach Scratch Canvas Event Listeners
-    // Pointer Events are general, but Mouse + Touch covers all bases cleanly
+    // Attach Scratch Canvas Event Listeners cleanly with touch/pointer interruption handling
     canvas.addEventListener("mousedown", startScratching);
     canvas.addEventListener("mousemove", scratch);
     window.addEventListener("mouseup", stopScratching);
 
-    canvas.addEventListener("touchstart", startScratching, { passive: false });
+    canvas.addEventListener("touchstart", (e) => {
+        if (e.cancelable) e.preventDefault();
+        startScratching(e);
+    }, { passive: false });
     canvas.addEventListener("touchmove", scratch, { passive: false });
     window.addEventListener("touchend", stopScratching);
+    window.addEventListener("touchcancel", stopScratching);
+
+    if (window.PointerEvent) {
+        canvas.addEventListener("pointerdown", (e) => {
+            if (e.pointerType === "touch" && e.cancelable) e.preventDefault();
+            startScratching(e);
+        });
+        canvas.addEventListener("pointermove", scratch);
+        window.addEventListener("pointerup", stopScratching);
+        window.addEventListener("pointercancel", stopScratching);
+    }
 
     // ==========================================================================
     // 4. VANILLA PARTY CONFETTI ANIMATION
@@ -858,6 +907,10 @@ document.addEventListener("DOMContentLoaded", () => {
     function handleFormSubmit(e) {
         e.preventDefault();
         
+        // Prevent duplicate simultaneous submissions
+        if (btnSubmitForm.dataset.submitting === "true") return;
+        btnSubmitForm.dataset.submitting = "true";
+
         // Use the session reward directly — single source of truth, never re-reads DOM
         const offerVal  = sessionReward ? stripHtml(sessionReward.label) : "Unknown";
         const couponVal = sessionReward ? (sessionReward.coupon || "") : "";
@@ -892,13 +945,16 @@ document.addEventListener("DOMContentLoaded", () => {
             inputEmail.classList.remove("invalid");
         }
 
-        if (!isValid) return;
+        if (!isValid) {
+            delete btnSubmitForm.dataset.submitting;
+            return;
+        }
 
         // If Valid, Enter Loading State
         btnSubmitForm.disabled = true;
         const btnText = btnSubmitForm.querySelector(".btn-text");
-        btnText.innerText = "Submitting...";
-        formLoader.classList.remove("hidden");
+        if (btnText) btnText.innerText = "Submitting...";
+        if (formLoader) formLoader.classList.remove("hidden");
 
         const now = new Date();
         const formattedClaimDateTime = now.toLocaleDateString("en-IN", {
@@ -921,7 +977,6 @@ document.addEventListener("DOMContentLoaded", () => {
             mobileNumber: mobileValFinal,
             email: emailValFinal,
             offer: offerVal,
-            couponCode: couponVal,
             claimDateTime: formattedClaimDateTime,
 
             // Fallback aliases for maximum server script compatibility
@@ -932,60 +987,84 @@ document.addEventListener("DOMContentLoaded", () => {
             "Mobile Number": mobileValFinal,
             "Email": emailValFinal,
             "Offer": offerVal,
-            "Coupon Code": couponVal,
             "Claim Date & Time": formattedClaimDateTime
         };
 
-        // Fallback simulation check if URL is the default placeholder (for local test safety)
-        if (GOOGLE_SHEETS_API_URL === "PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE" || !GOOGLE_SHEETS_API_URL.startsWith("http")) {
-            console.warn("GOOGLE_SHEETS_API_URL is placeholder or invalid. Simulating API submission success for local testing.");
-            setTimeout(() => {
-                btnSubmitForm.disabled = false;
-                btnText.innerText = dynamicBtnText;
-                formLoader.classList.add("hidden");
-                // Persist successfully claimed state
-                setClaimedState();
-                showScreen(screenSuccess);
-                triggerConfetti();
-            }, 1200);
-            return;
-        }
+        // Fetch timeout helper using AbortController with 15 second limit
+        const fetchWithTimeout = (url, options = {}, timeoutMs = 15000) => {
+            const controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
+            const signal = controller ? controller.signal : undefined;
+            const timer = setTimeout(() => {
+                if (controller) controller.abort();
+            }, timeoutMs);
 
-        // Real Google Apps Script Web App request
-        fetch(GOOGLE_SHEETS_API_URL, {
+            return fetch(url, { ...options, signal })
+                .finally(() => clearTimeout(timer));
+        };
+
+        // Submit to Google Sheets API
+        const postToGoogleSheets = (GOOGLE_SHEETS_API_URL && GOOGLE_SHEETS_API_URL.startsWith("http") && !GOOGLE_SHEETS_API_URL.includes("PASTE_YOUR"))
+            ? fetchWithTimeout(GOOGLE_SHEETS_API_URL, {
+                method: "POST",
+                body: JSON.stringify(claimPayload)
+            }, 15000)
+            .then(response => response.json().catch(() => ({ success: true })))
+            .catch(e => {
+                console.warn("[Google Sheets Error]", e);
+                return { success: false, error: e };
+            })
+            : Promise.resolve(null);
+
+        // Optionally post claim payload to PostgreSQL Backend API if available
+        const postToBackend = fetchWithTimeout(BACKEND_API_URL, {
             method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
             body: JSON.stringify(claimPayload)
-        })
+        }, 15000)
         .then(response => {
             if (!response.ok) {
-                throw new Error("Network response was not ok");
+                return null;
             }
             return response.json();
         })
-        .then(data => {
-            btnSubmitForm.disabled = false;
-            btnText.innerText = dynamicBtnText;
-            formLoader.classList.add("hidden");
+        .catch(() => null);
 
-            if (data && data.success) {
+        Promise.all([postToGoogleSheets, postToBackend])
+        .then(([gsData, dbData]) => {
+            const isDbSuccess = dbData && dbData.success;
+            const isGsSuccess = gsData && gsData.success !== false;
+            const isAlreadyClaimed = (dbData && dbData.error === "ALREADY_CLAIMED") || (gsData && gsData.error === "ALREADY_CLAIMED");
+
+            if (isDbSuccess || isGsSuccess) {
                 // Persist successfully claimed state
                 setClaimedState();
                 // Transition to success screen
                 showScreen(screenSuccess);
                 triggerConfetti();
+            } else if (isAlreadyClaimed) {
+                inputMobile.classList.add("invalid");
+                const errorMobile = document.getElementById("error-mobile");
+                if (errorMobile) {
+                    errorMobile.innerText = "This mobile number has already claimed an offer!";
+                    errorMobile.style.display = "block";
+                }
+                showToast("This mobile number has already claimed an offer!");
             } else {
-                throw new Error(data ? data.error || "Submission unsuccessful status" : "Invalid response");
+                throw new Error("Submission unsuccessful");
             }
         })
         .catch(err => {
             console.error("Submission error:", err);
-            
-            btnSubmitForm.disabled = false;
-            btnText.innerText = dynamicBtnText;
-            formLoader.classList.add("hidden");
-
             // Display error toast warning using our custom toast utility
             showToast("Failed to save details. Please check your connection and try again.");
+        })
+        .finally(() => {
+            delete btnSubmitForm.dataset.submitting;
+            btnSubmitForm.disabled = false;
+            if (btnText) btnText.innerText = dynamicBtnText;
+            if (formLoader) formLoader.classList.add("hidden");
         });
     }
 
@@ -1077,9 +1156,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3000);
     }
 
-    btnClaimOffer.addEventListener("click", () => {
-        showScreen(screenForm);
-    });
+    if (btnClaimOffer) {
+        btnClaimOffer.addEventListener("click", () => {
+            showScreen(screenForm);
+        });
+    }
 
     // Instagram Follow Button Listener
     if (btnInstagramFollow) {
@@ -1103,9 +1184,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Back Navigation button listeners
-    btnBackToScratch.addEventListener("click", () => {
-        showScreen(screenScratch);
-    });
+    if (btnBackToScratch) {
+        btnBackToScratch.addEventListener("click", () => {
+            showScreen(screenScratch);
+        });
+    }
 
     if (btnBackToInstagram) {
         btnBackToInstagram.addEventListener("click", () => {
@@ -1113,39 +1196,43 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    btnScratchContinue.addEventListener("click", () => {
-        showScreen(screenForm);
-    });
+    if (btnScratchContinue) {
+        btnScratchContinue.addEventListener("click", () => {
+            showScreen(screenForm);
+        });
+    }
 
     // Reset Campaign Flow
-    btnRestart.addEventListener("click", () => {
-        // Reset forms & styles
-        customerForm.reset();
-        [inputName, inputMobile, inputEmail].forEach(input => {
-            input.classList.remove("invalid");
+    if (btnRestart) {
+        btnRestart.addEventListener("click", () => {
+            // Reset forms & styles
+            if (customerForm) customerForm.reset();
+            [inputName, inputMobile, inputEmail].forEach(input => {
+                if (input) input.classList.remove("invalid");
+            });
+
+            // Reset Instagram Follow state
+            isInstagramClicked = false;
+            if (btnSubmitForm) {
+                btnSubmitForm.disabled = true;
+                btnSubmitForm.classList.add("btn-locked");
+            }
+            if (instagramInitialState) {
+                instagramInitialState.classList.remove("hidden");
+            }
+            if (instagramSuccessState) {
+                instagramSuccessState.classList.add("hidden");
+            }
+            if (instagramStatusText) {
+                instagramStatusText.innerText = "Instagram step required *";
+                instagramStatusText.classList.remove("verified");
+            }
+
+            // Go back to scratch card screen directly
+            showScreen(screenScratch);
+            initScratchCanvas();
         });
-
-        // Reset Instagram Follow state
-        isInstagramClicked = false;
-        if (btnSubmitForm) {
-            btnSubmitForm.disabled = true;
-            btnSubmitForm.classList.add("btn-locked");
-        }
-        if (instagramInitialState) {
-            instagramInitialState.classList.remove("hidden");
-        }
-        if (instagramSuccessState) {
-            instagramSuccessState.classList.add("hidden");
-        }
-        if (instagramStatusText) {
-            instagramStatusText.innerText = "Instagram step required *";
-            instagramStatusText.classList.remove("verified");
-        }
-
-        // Go back to scratch card screen directly
-        showScreen(screenScratch);
-        initScratchCanvas();
-    });
+    }
 
     // ==========================================================================
     // 6. INITIALIZE CAMPAIGN APP
@@ -1184,7 +1271,9 @@ document.addEventListener("DOMContentLoaded", () => {
         initLoader.style.transition = "opacity 0.4s ease";
         initLoader.style.opacity = "0";
         setTimeout(() => {
-            initLoader.remove();
+            if (initLoader.parentNode) {
+                initLoader.parentNode.removeChild(initLoader);
+            }
         }, 400);
     }
 });
