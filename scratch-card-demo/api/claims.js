@@ -44,7 +44,7 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-        const { fullName, mobileNumber, email, offer, couponCode, coupon, claimDateTime } = req.body || {};
+        const { fullName, mobileNumber, email, offer, claimDateTime } = req.body || {};
 
         if (!fullName || !mobileNumber) {
             return res.status(400).json({
@@ -57,7 +57,6 @@ module.exports = async function handler(req, res) {
         const cleanName = sanitizeText(fullName);
         const cleanEmail = email ? sanitizeText(email) : 'Not Provided';
         const cleanOffer = sanitizeText(offer);
-        const cleanCoupon = sanitizeText(couponCode || coupon);
         
         // Parse claimDateTime into a valid Date object for TIMESTAMP WITHOUT TIME ZONE column
         const rawDate = claimDateTime ? new Date(claimDateTime) : new Date();
@@ -77,15 +76,14 @@ module.exports = async function handler(req, res) {
         // 2. Atomic Insertion into public.claims table
         const insertQuery = `
             INSERT INTO public.claims 
-            (full_name, mobile_number, email, offer, coupon_code, claim_date_time, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, NOW())
+            (full_name, mobile_number, email, offer, claim_date_time, created_at)
+            VALUES ($1, $2, $3, $4, $5, NOW())
         `;
         const insertValues = [
             cleanName,
             cleanMobile,
             cleanEmail,
             cleanOffer,
-            cleanCoupon,
             validClaimDateTime
         ];
 
