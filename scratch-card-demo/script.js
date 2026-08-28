@@ -3,7 +3,7 @@
    ========================================================================== */
 
 // --- CONFIGURATION SECTION ---
-const BACKEND_API_URL = "http://127.0.0.1:5000/api/claims";
+const BACKEND_API_URL = "/api/claims";
 // Copy the Web App URL from your deployed Google Apps Script and paste it below (optional backup):
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyXm_94jLRyCPccQQ2bYxB6DjPveIW2Mh9YZ6dFIiHHfkJsKTHck2U8o1V2S41mDISssA/exec";
 // ==========================================================================
@@ -971,12 +971,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const mobileValFinal = inputMobile.value.trim();
         const emailValFinal = emailVal !== "" ? emailVal : "Not Provided";
 
-        // Google Sheets Payload: Exactly matched keys & fallbacks for Google Apps Script
+        // Claim Payload: Exactly matched keys & fallbacks for PostgreSQL Backend & Google Sheets backup
         const claimPayload = {
             fullName: nameVal,
             mobileNumber: mobileValFinal,
             email: emailValFinal,
             offer: offerVal,
+            couponCode: couponVal,
+            coupon: couponVal,
             claimDateTime: formattedClaimDateTime,
 
             // Fallback aliases for maximum server script compatibility
@@ -987,6 +989,7 @@ document.addEventListener("DOMContentLoaded", () => {
             "Mobile Number": mobileValFinal,
             "Email": emailValFinal,
             "Offer": offerVal,
+            "Coupon Code": couponVal,
             "Claim Date & Time": formattedClaimDateTime
         };
 
@@ -1002,21 +1005,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 .finally(() => clearTimeout(timer));
         };
 
-        // Submit to Google Sheets API
-        const postToGoogleSheets = (GOOGLE_SHEETS_API_URL && GOOGLE_SHEETS_API_URL.startsWith("http") && !GOOGLE_SHEETS_API_URL.includes("PASTE_YOUR"))
-            ? fetchWithTimeout(GOOGLE_SHEETS_API_URL, {
-                method: "POST",
-                body: JSON.stringify(claimPayload)
-            }, 15000)
-            .then(response => response.json().catch(() => ({ success: true })))
-            .catch(e => {
-                console.warn("[Google Sheets Error]", e);
-                return { success: false, error: e };
-            })
-            : Promise.resolve(null);
-
-        // Optionally post claim payload to PostgreSQL Backend API if available
-        const postToBackend = fetchWithTimeout(BACKEND_API_URL, {
+        // Primary API submission to PostgreSQL Backend
+        fetchWithTimeout(BACKEND_API_URL, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -1025,25 +1015,25 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 15000)
         .then(response => {
             if (!response.ok) {
-                return null;
+                throw new Error("HTTP error " + response.status);
             }
             return response.json();
         })
-        .catch(() => null);
+        .then(data => {
+            if (data && data.success) {
+                // Background backup post to Google Sheets (if configured)
+                if (GOOGLE_SHEETS_API_URL && GOOGLE_SHEETS_API_URL.startsWith("http") && !GOOGLE_SHEETS_API_URL.includes("PASTE_YOUR")) {
+                    fetchWithTimeout(GOOGLE_SHEETS_API_URL, {
+                        method: "POST",
+                        body: JSON.stringify(claimPayload)
+                    }, 15000).catch(e => console.warn("[Google Sheets Backup Error]", e));
+                }
 
-        Promise.all([postToGoogleSheets, postToBackend])
-        .then(([gsData, dbData]) => {
-            const isDbSuccess = dbData && dbData.success;
-            const isGsSuccess = gsData && gsData.success !== false;
-            const isAlreadyClaimed = (dbData && dbData.error === "ALREADY_CLAIMED") || (gsData && gsData.error === "ALREADY_CLAIMED");
-
-            if (isDbSuccess || isGsSuccess) {
-                // Persist successfully claimed state
+                // Persist successfully claimed state & show success ticket screen
                 setClaimedState();
-                // Transition to success screen
                 showScreen(screenSuccess);
                 triggerConfetti();
-            } else if (isAlreadyClaimed) {
+            } else if (data && data.error === "ALREADY_CLAIMED") {
                 inputMobile.classList.add("invalid");
                 const errorMobile = document.getElementById("error-mobile");
                 if (errorMobile) {
@@ -1052,7 +1042,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 showToast("This mobile number has already claimed an offer!");
             } else {
-                throw new Error("Submission unsuccessful");
+                throw new Error(data && data.error ? data.error : "Submission unsuccessful");
             }
         })
         .catch(err => {

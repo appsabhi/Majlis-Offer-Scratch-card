@@ -1,16 +1,6 @@
-const express = require('express');
-const cors = require('cors');
 const { Pool } = require('pg');
-require('dotenv').config();
 
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// PostgreSQL Connection Pool (Supports Neon POSTGRES_URL / DATABASE_URL connection string and local dev params)
+// Shared PostgreSQL Pool instance across serverless warm invocations
 const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 
 const pool = connectionString
@@ -23,11 +13,10 @@ const pool = connectionString
         port: parseInt(process.env.DB_PORT || '5434', 10),
         database: process.env.DB_NAME || 'majlis_scratchcard',
         user: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || '',
-        client_encoding: 'UTF8'
+        password: process.env.DB_PASSWORD || ''
     });
 
-// Helper function to sanitize text input and convert un-encodable characters (e.g. ₹ to Rs.)
+// Helper function to sanitize text input
 const sanitizeText = (str) => {
     if (!str) return '';
     return String(str)
@@ -35,41 +24,28 @@ const sanitizeText = (str) => {
         .trim();
 };
 
-// Verification of pool connection log
-pool.on('error', (err) => {
-    console.error('[PostgreSQL Pool Error]', err);
-});
+module.exports = async function handler(req, res) {
+    // Set CORS headers for security and cross-origin compatibility
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader(
+        'Access-Control-Allow-Headers',
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    );
 
-/**
- * Health Check Endpoint
- * Verifies PostgreSQL database connectivity
- */
-app.get('/api/health', async (req, res) => {
-    try {
-        await pool.query('SELECT 1');
-        return res.status(200).json({
-            success: true,
-            database: "connected"
-        });
-    } catch (err) {
-        console.error('[Health Check Error]', err.message);
-        return res.status(500).json({
-            success: false,
-            database: "disconnected",
-            error: err.message
-        });
+    // Handle preflight OPTIONS request
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
-});
 
-/**
- * Submit Claim Endpoint
- * Accepts customer claim payload and inserts into public.claims table
- */
-app.post('/api/claims', async (req, res) => {
+    if (req.method !== 'POST') {
+        return res.status(405).json({ success: false, error: 'Method Not Allowed' });
+    }
+
     try {
         const { fullName, mobileNumber, email, offer, couponCode, coupon, claimDateTime } = req.body || {};
 
-        // Validation for mandatory fields
         if (!fullName || !mobileNumber) {
             return res.status(400).json({
                 success: false,
@@ -87,7 +63,7 @@ app.post('/api/claims', async (req, res) => {
         const rawDate = claimDateTime ? new Date(claimDateTime) : new Date();
         const validClaimDateTime = (!isNaN(rawDate.getTime())) ? rawDate : new Date();
 
-        // 1. Check if mobile number already exists in public.claims
+        // 1. Duplicate Mobile Check
         const duplicateCheckQuery = 'SELECT id FROM public.claims WHERE mobile_number = $1 LIMIT 1';
         const existingClaim = await pool.query(duplicateCheckQuery, [cleanMobile]);
 
@@ -98,8 +74,7 @@ app.post('/api/claims', async (req, res) => {
             });
         }
 
-        // 2. Insert new claim record using parameterized query matching public.claims table columns:
-        // (full_name, mobile_number, email, offer, coupon_code, claim_date_time, created_at)
+        // 2. Atomic Insertion into public.claims table
         const insertQuery = `
             INSERT INTO public.claims 
             (full_name, mobile_number, email, offer, coupon_code, claim_date_time, created_at)
@@ -121,21 +96,17 @@ app.post('/api/claims', async (req, res) => {
         });
 
     } catch (err) {
+        // Atomic handle for PostgreSQL UNIQUE constraint violation (code 23505)
         if (err.code === '23505') {
             return res.status(200).json({
                 success: false,
                 error: "ALREADY_CLAIMED"
             });
         }
-        console.error('[Submit Claim Error]', err);
+        console.error('[Vercel Claims API Error]', err);
         return res.status(500).json({
             success: false,
             error: "Failed to record claim. Please try again."
         });
     }
-});
-
-// Start Express Server
-app.listen(PORT, () => {
-    console.log(`[Majlis Backend] Server listening on http://127.0.0.1:${PORT}`);
-});
+};
