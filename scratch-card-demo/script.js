@@ -213,9 +213,12 @@ function updateExpiryUI() {
 /**
  * Persists the successfully claimed state and claim timestamp for the visitor.
  */
-function setClaimedState() {
+function setClaimedState(mobileNumber) {
     try {
         const now = Date.now();
+        if (mobileNumber) {
+            safeStorage.setItem("majlis_claimed_mobile", String(mobileNumber).trim());
+        }
         safeStorage.setItem(getClaimedStorageKey(), "true");
         if (sessionReward) {
             safeStorage.setItem(getRewardLabelStorageKey(), sessionReward.label);
@@ -309,12 +312,14 @@ function initializeReward() {
                 return;
             }
 
-            // Check active REWARD_POOL next
-            const foundReward = REWARD_POOL.find(item => item.id === savedRewardId);
-            if (foundReward) {
-                sessionReward = foundReward;
-                console.log("[Majlis] Restored existing reward for visitor:", sessionReward.label);
-                return;
+            // Check active REWARD_POOL next only for unclaimed visitors
+            if (!isClaimedState()) {
+                const foundReward = REWARD_POOL.find(item => item.id === savedRewardId);
+                if (foundReward) {
+                    sessionReward = foundReward;
+                    console.log("[Majlis] Restored existing reward for visitor:", sessionReward.label);
+                    return;
+                }
             }
         }
     } catch (e) {
@@ -1091,7 +1096,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 // Persist successfully claimed state & show success ticket screen
-                setClaimedState();
+                setClaimedState(mobileValFinal);
                 showScreen(screenSuccess);
                 triggerConfetti();
             } else if (data && data.error === "ALREADY_CLAIMED") {
@@ -1243,6 +1248,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         
         // Persist claimed state to local storage so ticket remains visible
+        if (claimData.mobileNumber) {
+            safeStorage.setItem("majlis_claimed_mobile", String(claimData.mobileNumber).trim());
+        }
         safeStorage.setItem(getClaimedStorageKey(), "true");
         safeStorage.setItem(getRewardLabelStorageKey(), dbOfferLabel);
         safeStorage.setItem(getClaimedAtStorageKey(), claimTimestamp.toString());
@@ -1428,8 +1436,20 @@ document.addEventListener("DOMContentLoaded", () => {
     // Step 2: Write that reward into all DOM display elements before any interaction
     applyRewardToDOM();
     
-    // Step 3: Determine correct start screen based on claimed status
-    if (isClaimedState()) {
+    // Step 3: Determine correct start screen based on claimed status & sync DB claim
+    const savedClaimedMobile = safeStorage.getItem("majlis_claimed_mobile");
+
+    if (savedClaimedMobile) {
+        console.log("[Majlis] Found saved claimed mobile number. Syncing latest claim from DB:", savedClaimedMobile);
+        fetchClaimByMobile(savedClaimedMobile).catch(err => {
+            console.warn("[Majlis] Failed to sync claim from DB, showing local state:", err);
+            if (isClaimedState()) {
+                showScreen(screenSuccess);
+            } else {
+                initScratchCanvas();
+            }
+        });
+    } else if (isClaimedState()) {
         console.log("[Majlis] Visitor has already claimed their reward. Restoring Success screen.");
         showScreen(screenSuccess);
     } else {
