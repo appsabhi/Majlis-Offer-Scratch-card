@@ -281,26 +281,14 @@ function initializeReward() {
         const savedRewardCoupon = safeStorage.getItem(getRewardCouponStorageKey());
 
         if (savedRewardId) {
-            // First check if an explicit saved reward label exists (persisted for claimed visitors)
-            if (savedRewardLabel) {
-                sessionReward = {
-                    id: savedRewardId,
-                    label: savedRewardLabel,
-                    coupon: savedRewardCoupon || null,
-                    isWinner: true
-                };
-                console.log("[Majlis] Restored saved reward label for visitor:", sessionReward.label);
-                return;
-            }
-
-            // Check legacy map for old reward IDs (e.g. offer20 -> 21% OFF)
+            // 1. Check legacy map for old reward IDs (e.g. offer20 -> 21% OFF, offer174 -> ₹174 Mandi)
             if (LEGACY_REWARD_MAP[savedRewardId]) {
                 sessionReward = LEGACY_REWARD_MAP[savedRewardId];
                 console.log("[Majlis] Restored legacy reward for visitor:", sessionReward.label);
                 return;
             }
 
-            // Fallback: if visitor claimed offerDessert before the ₹200 update
+            // 2. Fallback: if visitor claimed offerDessert before the ₹200 update
             if (savedRewardId === "offerDessert" && isClaimedState()) {
                 sessionReward = {
                     id: "offerDessert",
@@ -312,7 +300,19 @@ function initializeReward() {
                 return;
             }
 
-            // Check active REWARD_POOL next only for unclaimed visitors
+            // 3. First check if an explicit saved reward label exists (persisted for claimed visitors)
+            if (savedRewardLabel) {
+                sessionReward = {
+                    id: savedRewardId,
+                    label: savedRewardLabel,
+                    coupon: savedRewardCoupon || null,
+                    isWinner: true
+                };
+                console.log("[Majlis] Restored saved reward label for visitor:", sessionReward.label);
+                return;
+            }
+
+            // 4. Check active REWARD_POOL next only for unclaimed visitors
             if (!isClaimedState()) {
                 const foundReward = REWARD_POOL.find(item => item.id === savedRewardId);
                 if (foundReward) {
