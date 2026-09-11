@@ -1095,13 +1095,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 showScreen(screenSuccess);
                 triggerConfetti();
             } else if (data && data.error === "ALREADY_CLAIMED") {
-                inputMobile.classList.add("invalid");
-                const errorMobile = document.getElementById("error-mobile");
-                if (errorMobile) {
-                    errorMobile.innerText = "This mobile number has already claimed an offer!";
-                    errorMobile.style.display = "block";
+                if (data.claim) {
+                    handleDbClaimedOffer(data.claim, "Welcome back! Displaying your claimed offer from DB.");
+                } else {
+                    fetchClaimByMobile(mobileValFinal).catch(() => {
+                        inputMobile.classList.add("invalid");
+                        const errorMobile = document.getElementById("error-mobile");
+                        if (errorMobile) {
+                            errorMobile.innerText = "This mobile number has already claimed an offer!";
+                            errorMobile.style.display = "block";
+                        }
+                        showToast("This mobile number has already claimed an offer!");
+                    });
                 }
-                showToast("This mobile number has already claimed an offer!");
             } else {
                 throw new Error(data && data.error ? data.error : "Submission unsuccessful");
             }
@@ -1205,6 +1211,135 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }, 350);
         }, 3000);
+    }
+
+    // Helper to format raw DB offer text into clean HTML label if needed
+    function formatDbOfferLabel(rawOffer) {
+        if (!rawOffer) return "Exclusive Offer";
+        let formatted = String(rawOffer).replace(/Rs\./g, "₹");
+        return formatted;
+    }
+
+    // Helper to handle restoring and rendering DB-claimed offer details
+    function handleDbClaimedOffer(claimData, successToastMsg) {
+        if (!claimData || !claimData.offer) return false;
+
+        const dbOfferLabel = formatDbOfferLabel(claimData.offer);
+        
+        sessionReward = {
+            id: "claimed_db",
+            label: dbOfferLabel,
+            coupon: null,
+            isWinner: true
+        };
+
+        // Determine claim timestamp from DB claimDateTime or created_at
+        let claimTimestamp = Date.now();
+        if (claimData.claimDateTime) {
+            const parsedDate = new Date(claimData.claimDateTime);
+            if (!isNaN(parsedDate.getTime())) {
+                claimTimestamp = parsedDate.getTime();
+            }
+        }
+        
+        // Persist claimed state to local storage so ticket remains visible
+        safeStorage.setItem(getClaimedStorageKey(), "true");
+        safeStorage.setItem(getRewardLabelStorageKey(), dbOfferLabel);
+        safeStorage.setItem(getClaimedAtStorageKey(), claimTimestamp.toString());
+
+        // Apply reward label to DOM elements and show success ticket
+        applyRewardToDOM();
+        showScreen(screenSuccess);
+
+        if (successToastMsg) {
+            showToast(successToastMsg);
+        }
+        return true;
+    }
+
+    // Function to fetch claim from DB by mobile number
+    function fetchClaimByMobile(mobileNumber) {
+        const cleanMobile = String(mobileNumber).trim();
+        const url = `${BACKEND_API_URL}?mobileNumber=${encodeURIComponent(cleanMobile)}`;
+
+        return fetchWithTimeout(url, { method: "GET" }, 15000)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.success && data.claimed && data.claim) {
+                    handleDbClaimedOffer(data.claim, "Found your claimed offer ticket!");
+                    return true;
+                } else if (data && data.success && !data.claimed) {
+                    showToast("No claimed offer found for this mobile number.");
+                    return false;
+                } else {
+                    throw new Error(data && data.error ? data.error : "Failed to fetch claim status.");
+                }
+            });
+    }
+
+    // --- Claimed Offer Lookup Modal Handlers ---
+    const modalLookup = document.getElementById("modal-claim-lookup");
+    const btnCloseLookup = document.getElementById("btn-close-lookup");
+    const formLookupClaim = document.getElementById("form-lookup-claim");
+    const inputLookupMobile = document.getElementById("input-lookup-mobile");
+    const btnSubmitLookup = document.getElementById("btn-submit-lookup");
+    const lookupLoader = document.getElementById("lookup-loader");
+    const checkClaimedBtns = document.querySelectorAll(".btn-check-claimed-link");
+
+    checkClaimedBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            if (modalLookup) {
+                modalLookup.classList.remove("hidden");
+                if (inputLookupMobile) {
+                    inputLookupMobile.value = "";
+                    inputLookupMobile.classList.remove("invalid");
+                    inputLookupMobile.focus();
+                }
+            }
+        });
+    });
+
+    if (btnCloseLookup) {
+        btnCloseLookup.addEventListener("click", () => {
+            if (modalLookup) modalLookup.classList.add("hidden");
+        });
+    }
+
+    if (modalLookup) {
+        modalLookup.addEventListener("click", (e) => {
+            if (e.target === modalLookup) {
+                modalLookup.classList.add("hidden");
+            }
+        });
+    }
+
+    if (formLookupClaim) {
+        formLookupClaim.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const mobileVal = inputLookupMobile ? inputLookupMobile.value.trim() : "";
+            if (mobileVal.length !== 10 || !/^\d{10}$/.test(mobileVal)) {
+                if (inputLookupMobile) inputLookupMobile.classList.add("invalid");
+                return;
+            }
+
+            if (btnSubmitLookup) btnSubmitLookup.disabled = true;
+            if (lookupLoader) lookupLoader.classList.remove("hidden");
+
+            fetchClaimByMobile(mobileVal)
+                .then(found => {
+                    if (found && modalLookup) {
+                        modalLookup.classList.add("hidden");
+                    }
+                })
+                .catch(err => {
+                    console.error("[Lookup Error]", err);
+                    showToast("No active claimed offer found for this number.");
+                })
+                .finally(() => {
+                    if (btnSubmitLookup) btnSubmitLookup.disabled = false;
+                    if (lookupLoader) lookupLoader.classList.add("hidden");
+                });
+        });
     }
 
     if (btnClaimOffer) {

@@ -1771,3 +1771,108 @@ body::before {
     opacity: 1;
     transform: translateY(-2px);
 }
+
+/* ==========================================================================
+   ALREADY CLAIMED TICKET LOOKUP MODAL STYLES
+   ========================================================================== */
+.already-claimed-link-wrapper,
+.already-claimed-form-wrapper {
+    margin-top: 14px;
+    text-align: center;
+    width: 100%;
+}
+
+.btn-check-claimed-link {
+    background: transparent;
+    border: none;
+    color: var(--color-gold);
+    font-family: var(--font-primary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    opacity: 0.9;
+    transition: all 0.2s ease;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+.btn-check-claimed-link:hover {
+    color: #ffffff;
+    opacity: 1;
+    background: rgba(197, 160, 89, 0.1);
+}
+
+.lookup-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 53, 32, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.lookup-modal-card {
+    background: var(--bg-cream);
+    border: 1.5px solid var(--color-gold);
+    border-radius: 18px;
+    padding: 24px 20px 20px 20px;
+    width: 100%;
+    max-width: 380px;
+    position: relative;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    color: var(--text-dark);
+}
+
+.lookup-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    color: var(--text-muted);
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.lookup-modal-close:hover {
+    color: var(--text-dark);
+}
+
+.lookup-modal-header {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.lookup-modal-icon {
+    font-size: 32px;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.lookup-modal-title {
+    font-family: var(--font-heading);
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--color-green-deep);
+    margin-bottom: 4px;
+}
+
+.lookup-modal-subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.lookup-modal-form {
+    display: flex;
+    flex-direction: column;
+}

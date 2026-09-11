@@ -62,6 +62,54 @@ app.get('/api/health', async (req, res) => {
 });
 
 /**
+ * GET Claim Endpoint
+ * Fetch customer claim status and details by mobile number
+ */
+app.get('/api/claims', async (req, res) => {
+    try {
+        const mobile = req.query.mobileNumber || req.query.mobile;
+        if (!mobile) {
+            return res.status(400).json({
+                success: false,
+                error: "mobileNumber query parameter is required."
+            });
+        }
+
+        const cleanMobile = String(mobile).trim();
+        const query = 'SELECT id, full_name, mobile_number, email, offer, claim_date_time, created_at FROM public.claims WHERE mobile_number = $1 LIMIT 1';
+        const result = await pool.query(query, [cleanMobile]);
+
+        if (result.rows.length === 0) {
+            return res.status(200).json({
+                success: true,
+                claimed: false
+            });
+        }
+
+        const row = result.rows[0];
+        return res.status(200).json({
+            success: true,
+            claimed: true,
+            claim: {
+                id: row.id,
+                fullName: row.full_name,
+                mobileNumber: row.mobile_number,
+                email: row.email,
+                offer: row.offer,
+                claimDateTime: row.claim_date_time || row.created_at
+            }
+        });
+
+    } catch (err) {
+        console.error('[GET Claim Error]', err);
+        return res.status(500).json({
+            success: false,
+            error: "Failed to fetch claim status. Please try again."
+        });
+    }
+});
+
+/**
  * Submit Claim Endpoint
  * Accepts customer claim payload and inserts into public.claims table
  */
@@ -87,13 +135,21 @@ app.post('/api/claims', async (req, res) => {
         const validClaimDateTime = (!isNaN(rawDate.getTime())) ? rawDate : new Date();
 
         // 1. Check if mobile number already exists in public.claims
-        const duplicateCheckQuery = 'SELECT id FROM public.claims WHERE mobile_number = $1 LIMIT 1';
+        const duplicateCheckQuery = 'SELECT id, full_name, mobile_number, email, offer, claim_date_time, created_at FROM public.claims WHERE mobile_number = $1 LIMIT 1';
         const existingClaim = await pool.query(duplicateCheckQuery, [cleanMobile]);
 
         if (existingClaim.rows.length > 0) {
+            const row = existingClaim.rows[0];
             return res.status(200).json({
                 success: false,
-                error: "ALREADY_CLAIMED"
+                error: "ALREADY_CLAIMED",
+                claim: {
+                    fullName: row.full_name,
+                    mobileNumber: row.mobile_number,
+                    email: row.email,
+                    offer: row.offer,
+                    claimDateTime: row.claim_date_time || row.created_at
+                }
             });
         }
 
@@ -120,6 +176,26 @@ app.post('/api/claims', async (req, res) => {
 
     } catch (err) {
         if (err.code === '23505') {
+            try {
+                const cleanMobile = String(req.body.mobileNumber || '').trim();
+                const result = await pool.query('SELECT id, full_name, mobile_number, email, offer, claim_date_time, created_at FROM public.claims WHERE mobile_number = $1 LIMIT 1', [cleanMobile]);
+                if (result.rows.length > 0) {
+                    const row = result.rows[0];
+                    return res.status(200).json({
+                        success: false,
+                        error: "ALREADY_CLAIMED",
+                        claim: {
+                            fullName: row.full_name,
+                            mobileNumber: row.mobile_number,
+                            email: row.email,
+                            offer: row.offer,
+                            claimDateTime: row.claim_date_time || row.created_at
+                        }
+                    });
+                }
+            } catch (fetchErr) {
+                console.error('[Duplicate Handle Error]', fetchErr);
+            }
             return res.status(200).json({
                 success: false,
                 error: "ALREADY_CLAIMED"

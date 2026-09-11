@@ -149,6 +149,10 @@
                     <span id="scratch-progress-text" class="progress-text">Scratch: 0%</span>
                 </div>
                 <div id="scratch-continue-area" class="scratch-progress-container hidden"></div>
+                
+                <div class="already-claimed-link-wrapper">
+                    <button type="button" class="btn-check-claimed-link">Already claimed an offer? Check your ticket 🎫</button>
+                </div>
             </div>
         </section>
 
@@ -264,6 +268,10 @@
                                 </svg>
                                 <span>Your information is secure.</span>
                             </p>
+
+                            <div class="already-claimed-form-wrapper">
+                                <button type="button" class="btn-check-claimed-link">Already claimed an offer? Check your ticket 🎫</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -374,6 +382,31 @@
         </footer>
 
     </main>
+
+    <!-- Claim Lookup Modal Dialog -->
+    <div id="modal-claim-lookup" class="lookup-modal-overlay hidden">
+        <div class="lookup-modal-card">
+            <button type="button" id="btn-close-lookup" class="lookup-modal-close" aria-label="Close modal">&times;</button>
+            <div class="lookup-modal-header">
+                <span class="lookup-modal-icon">🎫</span>
+                <h3 class="lookup-modal-title">Find Your Claimed Offer</h3>
+                <p class="lookup-modal-subtitle">Enter your registered 10-digit mobile number to view your claimed offer ticket.</p>
+            </div>
+            <form id="form-lookup-claim" class="lookup-modal-form" novalidate>
+                <div class="input-group">
+                    <label for="input-lookup-mobile" class="input-label">Mobile Number</label>
+                    <div class="input-field-wrapper">
+                        <input type="tel" id="input-lookup-mobile" class="input-field" placeholder="10-digit mobile number" maxlength="10" required>
+                        <span class="error-message" id="error-lookup-mobile">Please enter a valid 10-digit mobile number</span>
+                    </div>
+                </div>
+                <button type="submit" id="btn-submit-lookup" class="btn btn-primary" style="margin-top: 14px; width: 100%;">
+                    <span class="btn-text">Check Claimed Ticket 🔍</span>
+                    <div class="loader hidden" id="lookup-loader"></div>
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- Toast notifications container -->
     <div id="toast-container"></div>
