@@ -19,6 +19,12 @@ const REWARD_POOL = [
     // { id: "betterLuck",   label: "Better Luck Next Time",coupon: null,       isWinner: false }
 ];
 
+// Legacy reward map to ensure users who claimed previous campaign offers (e.g. 21% OFF or ₹174 Mandi) keep their exact claimed reward when returning
+const LEGACY_REWARD_MAP = {
+    "offer20":      { id: "offer20",      label: "21% OFF",                                      coupon: "ONAM20",   isWinner: true },
+    "offer174":     { id: "offer174",     label: `₹174 <br> for Unlimited <br> Mandi (qtr)`,     coupon: "ONAMDESS", isWinner: true }
+};
+
 // Holds the ONE reward assigned for this session. Set once on page load.
 let sessionReward = null;
 
@@ -76,6 +82,14 @@ const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
  */
 function getRewardStorageKey() {
     return `majlis_campaign_reward_id_${visitorId || "fallback"}`;
+}
+
+function getRewardLabelStorageKey() {
+    return `majlis_campaign_reward_label_${visitorId || "fallback"}`;
+}
+
+function getRewardCouponStorageKey() {
+    return `majlis_campaign_reward_coupon_${visitorId || "fallback"}`;
 }
 
 /**
@@ -203,6 +217,12 @@ function setClaimedState() {
     try {
         const now = Date.now();
         safeStorage.setItem(getClaimedStorageKey(), "true");
+        if (sessionReward) {
+            safeStorage.setItem(getRewardLabelStorageKey(), sessionReward.label);
+            if (sessionReward.coupon) {
+                safeStorage.setItem(getRewardCouponStorageKey(), sessionReward.coupon);
+            }
+        }
         if (!safeStorage.getItem(getClaimedAtStorageKey())) {
             safeStorage.setItem(getClaimedAtStorageKey(), now.toString());
         }
@@ -219,6 +239,8 @@ function clearLocalState() {
     try {
         if (visitorId) {
             safeStorage.removeItem(getRewardStorageKey());
+            safeStorage.removeItem(getRewardLabelStorageKey());
+            safeStorage.removeItem(getRewardCouponStorageKey());
             safeStorage.removeItem(getRevealedStorageKey());
             safeStorage.removeItem(getClaimedStorageKey());
             safeStorage.removeItem(getClaimedAtStorageKey());
@@ -252,7 +274,42 @@ function initializeReward() {
     // 2. Resolve existing reward or pick a new one for this visitor
     try {
         const savedRewardId = safeStorage.getItem(getRewardStorageKey());
+        const savedRewardLabel = safeStorage.getItem(getRewardLabelStorageKey());
+        const savedRewardCoupon = safeStorage.getItem(getRewardCouponStorageKey());
+
         if (savedRewardId) {
+            // First check if an explicit saved reward label exists (persisted for claimed visitors)
+            if (savedRewardLabel) {
+                sessionReward = {
+                    id: savedRewardId,
+                    label: savedRewardLabel,
+                    coupon: savedRewardCoupon || null,
+                    isWinner: true
+                };
+                console.log("[Majlis] Restored saved reward label for visitor:", sessionReward.label);
+                return;
+            }
+
+            // Check legacy map for old reward IDs (e.g. offer20 -> 21% OFF)
+            if (LEGACY_REWARD_MAP[savedRewardId]) {
+                sessionReward = LEGACY_REWARD_MAP[savedRewardId];
+                console.log("[Majlis] Restored legacy reward for visitor:", sessionReward.label);
+                return;
+            }
+
+            // Fallback: if visitor claimed offerDessert before the ₹200 update
+            if (savedRewardId === "offerDessert" && isClaimedState()) {
+                sessionReward = {
+                    id: "offerDessert",
+                    label: `₹174 <br> for Unlimited <br> Mandi (qtr)`,
+                    coupon: "ONAMDESS",
+                    isWinner: true
+                };
+                console.log("[Majlis] Restored claimed legacy Mandi reward:", sessionReward.label);
+                return;
+            }
+
+            // Check active REWARD_POOL next
             const foundReward = REWARD_POOL.find(item => item.id === savedRewardId);
             if (foundReward) {
                 sessionReward = foundReward;
@@ -270,6 +327,10 @@ function initializeReward() {
 
     try {
         safeStorage.setItem(getRewardStorageKey(), sessionReward.id);
+        safeStorage.setItem(getRewardLabelStorageKey(), sessionReward.label);
+        if (sessionReward.coupon) {
+            safeStorage.setItem(getRewardCouponStorageKey(), sessionReward.coupon);
+        }
         console.log("[Majlis] Assigned NEW reward for visitor:", sessionReward.label);
     } catch (e) {
         console.warn("[Majlis] Error saving reward to storage:", e);
