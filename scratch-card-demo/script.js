@@ -14,8 +14,9 @@ const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyXm_94jL
 //   isWinner   — true if this is a real prize; false for "Better Luck" outcomes
 // ==========================================================================
 const REWARD_POOL = [
-    { id: "offer5",       label: "5% OFF",               coupon: "ONAM5",    isWinner: true  },
-    { id: "offerDessert", label: `₹200 <br> for Unlimited <br> Mandi (qtr)`,         coupon: "ONAMDESS", isWinner: true  },
+    { id: "offer5",         label: "5% OFF",                                       coupon: "ONAM5",     isWinner: true },
+    { id: "offerDessert",   label: `₹200 <br> for Unlimited <br> Mandi (qtr)`,     coupon: "ONAMDESS",  isWinner: true },
+    { id: "offerChampagne", label: `Free <br> Saudi Champagne`,                    coupon: "ONAMCHAMP", isWinner: true },
     // { id: "betterLuck",   label: "Better Luck Next Time",coupon: null,       isWinner: false }
 ];
 
