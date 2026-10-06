@@ -17,6 +17,13 @@ const REWARD_POOL = [
     { id: "offer5",         label: "5% OFF",                                       coupon: "ONAM5",     isWinner: true },
     { id: "offerDessert",   label: `₹200 <br> for Unlimited <br> Mandi (qtr)`,     coupon: "ONAMDESS",  isWinner: true },
     { id: "offerChampagne", label: `Free <br> Saudi Champagne`,                    coupon: "ONAMCHAMP", isWinner: true },
+    { id: "offer50Rs",      label: `₹50 OFF <br> on bill above ₹499`,              coupon: "OFF50",     isWinner: true },
+    { id: "offer75Rs",      label: `₹75 OFF <br> on bill above ₹699`,              coupon: "OFF75",     isWinner: true },
+    { id: "offer100Rs",     label: `₹100 OFF <br> on bill above ₹999`,             coupon: "OFF100",    isWinner: true },
+    { id: "offer150Rs",     label: `₹150 OFF <br> on bill above ₹1299`,            coupon: "OFF150",    isWinner: true },
+    { id: "offer5PercentNext", label: `5% OFF <br> on next purchase`,              coupon: "NEXT5",     isWinner: true },
+    { id: "offer10PercentNext", label: `10% OFF <br> on next purchase`,            coupon: "NEXT10",    isWinner: true },
+    
     // { id: "betterLuck",   label: "Better Luck Next Time",coupon: null,       isWinner: false }
 ];
 
@@ -29,7 +36,7 @@ const LEGACY_REWARD_MAP = {
 // Holds the ONE reward assigned for this session. Set once on page load.
 let sessionReward = null;
 
-const DEV_MODE = true;
+const DEV_MODE = false;
 
 const VISITOR_KEY = "majlis_visitor_id";
 
@@ -1399,7 +1406,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Reset Campaign Flow
     if (btnRestart) {
+        if (DEV_MODE) {
+            btnRestart.classList.remove("hidden");
+        }
+
         btnRestart.addEventListener("click", () => {
+            if (DEV_MODE) {
+                clearLocalState();
+                window.location.reload();
+                return;
+            }
+
             // Reset forms & styles
             if (customerForm) customerForm.reset();
             [inputName, inputMobile, inputEmail].forEach(input => {
@@ -1482,5 +1499,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 initLoader.parentNode.removeChild(initLoader);
             }
         }, 400);
+    }
+
+    // Initialize floating Dev Reset button
+    const devResetBtn = document.getElementById("dev-reset-btn");
+    if (devResetBtn && typeof DEV_MODE !== 'undefined' && DEV_MODE) {
+        devResetBtn.classList.remove("hidden");
+        devResetBtn.addEventListener("click", () => {
+            clearLocalState();
+            window.location.reload();
+        });
     }
 });
