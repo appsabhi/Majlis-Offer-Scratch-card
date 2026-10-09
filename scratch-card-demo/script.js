@@ -3,7 +3,9 @@
    ========================================================================== */
 
 // --- CONFIGURATION SECTION ---
-const BACKEND_API_URL = "/api/claims";
+const BACKEND_API_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') 
+    ? "http://127.0.0.1:5000/api/claims" 
+    : "/api/claims";
 // Copy the Web App URL from your deployed Google Apps Script and paste it below (optional backup):
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyXm_94jLRyCPccQQ2bYxB6DjPveIW2Mh9YZ6dFIiHHfkJsKTHck2U8o1V2S41mDISssA/exec";
 // ==========================================================================
@@ -1499,15 +1501,5 @@ document.addEventListener("DOMContentLoaded", () => {
                 initLoader.parentNode.removeChild(initLoader);
             }
         }, 400);
-    }
-
-    // Initialize floating Dev Reset button
-    const devResetBtn = document.getElementById("dev-reset-btn");
-    if (devResetBtn && typeof DEV_MODE !== 'undefined' && DEV_MODE) {
-        devResetBtn.classList.remove("hidden");
-        devResetBtn.addEventListener("click", () => {
-            clearLocalState();
-            window.location.reload();
-        });
     }
 });
