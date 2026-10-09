@@ -36,7 +36,7 @@ const LEGACY_REWARD_MAP = {
 // Holds the ONE reward assigned for this session. Set once on page load.
 let sessionReward = null;
 
-const DEV_MODE = false;
+const DEV_MODE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
 
 const VISITOR_KEY = "majlis_visitor_id";
 
@@ -978,6 +978,18 @@ document.addEventListener("DOMContentLoaded", () => {
         return re.test(String(email).toLowerCase());
     }
 
+    // Fetch timeout helper using AbortController with 15 second limit
+    const fetchWithTimeout = (url, options = {}, timeoutMs = 15000) => {
+        const controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
+        const signal = controller ? controller.signal : undefined;
+        const timer = setTimeout(() => {
+            if (controller) controller.abort();
+        }, timeoutMs);
+
+        return fetch(url, { ...options, signal })
+            .finally(() => clearTimeout(timer));
+    };
+
     function handleFormSubmit(e) {
         e.preventDefault();
         
@@ -1065,18 +1077,6 @@ document.addEventListener("DOMContentLoaded", () => {
             "Offer": offerVal,
             "Coupon Code": couponVal,
             "Claim Date & Time": formattedClaimDateTime
-        };
-
-        // Fetch timeout helper using AbortController with 15 second limit
-        const fetchWithTimeout = (url, options = {}, timeoutMs = 15000) => {
-            const controller = (typeof AbortController !== "undefined") ? new AbortController() : null;
-            const signal = controller ? controller.signal : undefined;
-            const timer = setTimeout(() => {
-                if (controller) controller.abort();
-            }, timeoutMs);
-
-            return fetch(url, { ...options, signal })
-                .finally(() => clearTimeout(timer));
         };
 
         // Primary API submission to PostgreSQL Backend
