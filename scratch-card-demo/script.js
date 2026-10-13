@@ -16,23 +16,21 @@ const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyXm_94jL
 //   isWinner   — true if this is a real prize; false for "Better Luck" outcomes
 // ==========================================================================
 const REWARD_POOL = [
-    { id: "offer5",         label: "5% OFF",                                       coupon: "ONAM5",     isWinner: true },
-    { id: "offerDessert",   label: `₹200 <br> for Unlimited <br> Mandi (qtr)`,     coupon: "ONAMDESS",  isWinner: true },
-    { id: "offerChampagne", label: `Free <br> Saudi Champagne`,                    coupon: "ONAMCHAMP", isWinner: true },
-    { id: "offer50Rs",      label: `₹50 OFF <br> on bill above ₹499`,              coupon: "OFF50",     isWinner: true },
-    { id: "offer75Rs",      label: `₹75 OFF <br> on bill above ₹699`,              coupon: "OFF75",     isWinner: true },
-    { id: "offer100Rs",     label: `₹100 OFF <br> on bill above ₹999`,             coupon: "OFF100",    isWinner: true },
-    { id: "offer150Rs",     label: `₹150 OFF <br> on bill above ₹1299`,            coupon: "OFF150",    isWinner: true },
-    { id: "offer5PercentNext", label: `5% OFF <br> on next purchase`,              coupon: "NEXT5",     isWinner: true },
-    { id: "offer10PercentNext", label: `10% OFF <br> on next purchase`,            coupon: "NEXT10",    isWinner: true },
-    
-    // { id: "betterLuck",   label: "Better Luck Next Time",coupon: null,       isWinner: false }
+    { id: "offer50Rs",          label: `₹50 OFF <br> on bill above ₹499`,   coupon: "OFF50",  isWinner: true },
+    { id: "offer75Rs",          label: `₹75 OFF <br> on bill above ₹699`,   coupon: "OFF75",  isWinner: true },
+    { id: "offer100Rs",         label: `₹100 OFF <br> on bill above ₹999`,  coupon: "OFF100", isWinner: true },
+    { id: "offer150Rs",         label: `₹150 OFF <br> on bill above ₹1299`, coupon: "OFF150", isWinner: true },
+    { id: "offer5PercentNext",  label: `5% OFF <br> on next purchase`,       coupon: "NEXT5",  isWinner: true },
+    { id: "offer10PercentNext", label: `10% OFF <br> on next purchase`,      coupon: "NEXT10", isWinner: true }
 ];
 
-// Legacy reward map to ensure users who claimed previous campaign offers (e.g. 21% OFF or ₹174 Mandi) keep their exact claimed reward when returning
+// Legacy reward map to ensure users who previously claimed old campaign offers keep their exact claimed reward when returning
 const LEGACY_REWARD_MAP = {
-    "offer20":      { id: "offer20",      label: "21% OFF",                                      coupon: "ONAM20",   isWinner: true },
-    "offer174":     { id: "offer174",     label: `₹174 <br> for Unlimited <br> Mandi (qtr)`,     coupon: "ONAMDESS", isWinner: true }
+    "offer20":        { id: "offer20",        label: "21% OFF",                                  coupon: "ONAM20",    isWinner: true },
+    "offer174":       { id: "offer174",       label: `₹174 <br> for Unlimited <br> Mandi (qtr)`, coupon: "ONAMDESS",  isWinner: true },
+    "offer5":         { id: "offer5",         label: "5% OFF",                                   coupon: "ONAM5",     isWinner: true },
+    "offerDessert":   { id: "offerDessert",   label: `₹200 <br> for Unlimited <br> Mandi (qtr)`, coupon: "ONAMDESS",  isWinner: true },
+    "offerChampagne": { id: "offerChampagne", label: `Free <br> Saudi Champagne`,                coupon: "ONAMCHAMP", isWinner: true }
 };
 
 // Holds the ONE reward assigned for this session. Set once on page load.
@@ -291,44 +289,35 @@ function initializeReward() {
         const savedRewardCoupon = safeStorage.getItem(getRewardCouponStorageKey());
 
         if (savedRewardId) {
-            // 1. Check legacy map for old reward IDs (e.g. offer20 -> 21% OFF, offer174 -> ₹174 Mandi)
-            if (LEGACY_REWARD_MAP[savedRewardId]) {
-                sessionReward = LEGACY_REWARD_MAP[savedRewardId];
-                console.log("[Majlis] Restored legacy reward for visitor:", sessionReward.label);
-                return;
-            }
-
-            // 2. Fallback: if visitor claimed offerDessert before the ₹200 update
-            if (savedRewardId === "offerDessert" && isClaimedState()) {
-                sessionReward = {
-                    id: "offerDessert",
-                    label: `₹174 <br> for Unlimited <br> Mandi (qtr)`,
-                    coupon: "ONAMDESS",
-                    isWinner: true
-                };
-                console.log("[Majlis] Restored claimed legacy Mandi reward:", sessionReward.label);
-                return;
-            }
-
-            // 3. First check if an explicit saved reward label exists (persisted for claimed visitors)
-            if (savedRewardLabel) {
-                sessionReward = {
-                    id: savedRewardId,
-                    label: savedRewardLabel,
-                    coupon: savedRewardCoupon || null,
-                    isWinner: true
-                };
-                console.log("[Majlis] Restored saved reward label for visitor:", sessionReward.label);
-                return;
-            }
-
-            // 4. Check active REWARD_POOL next only for unclaimed visitors
-            if (!isClaimedState()) {
+            // A. If user has ALREADY claimed their reward, preserve what they claimed
+            if (isClaimedState()) {
+                if (LEGACY_REWARD_MAP[savedRewardId]) {
+                    sessionReward = LEGACY_REWARD_MAP[savedRewardId];
+                    console.log("[Majlis] Restored claimed legacy reward for visitor:", sessionReward.label);
+                    return;
+                }
+                if (savedRewardLabel) {
+                    sessionReward = {
+                        id: savedRewardId,
+                        label: savedRewardLabel,
+                        coupon: savedRewardCoupon || null,
+                        isWinner: true
+                    };
+                    console.log("[Majlis] Restored claimed saved reward label for visitor:", sessionReward.label);
+                    return;
+                }
+            } else {
+                // B. Unclaimed visitor: strictly validate against active REWARD_POOL
                 const foundReward = REWARD_POOL.find(item => item.id === savedRewardId);
                 if (foundReward) {
                     sessionReward = foundReward;
-                    console.log("[Majlis] Restored existing reward for visitor:", sessionReward.label);
+                    console.log("[Majlis] Restored active reward for visitor:", sessionReward.label);
                     return;
+                } else {
+                    // Previously assigned reward is no longer active in REWARD_POOL.
+                    // Clear previous scratch reveal state so visitor gets a fresh card with one of the 6 active offers.
+                    safeStorage.removeItem(getRevealedStorageKey());
+                    console.log("[Majlis] Saved reward was retired from pool. Re-assigning an active offer.");
                 }
             }
         }
@@ -521,6 +510,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // 1. SCREEN TRANSITION CONTROLLER
     // ==========================================================================
     function showScreen(targetScreen) {
+        // Enforce that customers who already claimed can NEVER see the scratch card or form
+        if (isClaimedState() && targetScreen !== screenSuccess) {
+            targetScreen = screenSuccess;
+        }
+
         const screens = [screenScratch, screenInstagram, screenForm, screenSuccess];
         
         screens.forEach(s => {
@@ -1459,21 +1453,18 @@ document.addEventListener("DOMContentLoaded", () => {
     // Step 3: Determine correct start screen based on claimed status & sync DB claim
     const savedClaimedMobile = safeStorage.getItem("majlis_claimed_mobile");
 
-    if (savedClaimedMobile) {
-        console.log("[Majlis] Found saved claimed mobile number. Syncing latest claim from DB:", savedClaimedMobile);
-        fetchClaimByMobile(savedClaimedMobile).catch(err => {
-            console.warn("[Majlis] Failed to sync claim from DB, showing local state:", err);
-            if (isClaimedState()) {
-                showScreen(screenSuccess);
-            } else {
-                initScratchCanvas();
-            }
-        });
-    } else if (isClaimedState()) {
-        console.log("[Majlis] Visitor has already claimed their reward. Restoring Success screen.");
+    if (savedClaimedMobile || isClaimedState()) {
+        console.log("[Majlis] Visitor has already claimed their reward. Displaying Success screen directly.");
         showScreen(screenSuccess);
+
+        if (savedClaimedMobile) {
+            console.log("[Majlis] Found saved claimed mobile number. Syncing latest claim from DB in background:", savedClaimedMobile);
+            fetchClaimByMobile(savedClaimedMobile).catch(err => {
+                console.warn("[Majlis] Failed to sync claim from DB, displaying local state:", err);
+            });
+        }
     } else {
-        // Initialize the scratch canvas normally
+        // Initialize the scratch canvas normally for new visitors
         initScratchCanvas();
     }
 
