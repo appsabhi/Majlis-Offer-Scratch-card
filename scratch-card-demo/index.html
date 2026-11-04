@@ -88,23 +88,21 @@
                 <div class="scratch-card-outer">
                     <div class="scratch-card-header">ARABIAN MAJLIS</div>
                     <div class="scratch-card-body">
-                        <!-- Subtle Gold Monogram Accent inside the card -->
-                        <div class="card-monogram">
-                            <img src="assets/png/Vector Smart Object copy 12.png" alt="Majlis" class="monogram-icon">
+                        <h1 class="card-campaign-title">LIGHT THE DIYA & WIN</h1>
+                        <div id="diwali-instruction-area" class="diwali-instruction-container">
+                            <div id="diwali-instruction-pill" class="diwali-instruction-pill">
+                                <span class="instruction-flame-icon">🔥</span>
+                                <span id="diwali-instruction-text" class="instruction-pill-text">Drag the little flame to light the Diya</span>
+                            </div>
                         </div>
-
-                        <h1 class="card-campaign-title">SCAN SCRATCH WIN</h1>
-                        <p class="card-campaign-subtitle">YOUR ARABIAN MAJLIS SURPRISE IS <br>JUST A SCRATCH AWAY!</p>
-
-
 
                         <div class="scratch-card-inner">
                             <!-- Offer Layer (Revealed below) -->
-                            <div class="offer-reveal-layer">
+                            <div class="offer-reveal-layer" aria-hidden="true">
                                 <div class="offer-badge">SPECIAL OFFERS</div>
                                 <h2 class="congrats-text" id="offer-congrats">CONGRATULATIONS</h2>
                                 <p class="offer-desc">YOUR EXCLUSIVE OFFER</p>
-                                <div class="offer-amount animate-pulse">₹50 OFF</div>
+                                <div class="offer-amount animate-pulse"></div>
                                 <div class="revealed-coupon" style="display: none;">
                                     <span class="coupon-label">Coupon Code:</span>
                                     <span class="coupon-code">OFF50</span>
@@ -114,9 +112,10 @@
                             <!-- Congratulations Overlay (initially hidden) -->
                             <div id="congrats-overlay" class="congrats-overlay hidden">
                                 <div class="congrats-overlay-content">
-                                    <h2 class="congrats-overlay-title">CONGRATULATIONS</h2>
-                                    <p class="congrats-overlay-subtitle">YOUR EXCLUSIVE OFFER</p>
-                                    <div class="congrats-overlay-offer animate-pulse">₹50 OFF</div>
+                                    <div class="diwali-popup-badge">✨ HAPPY DIWALI ✨</div>
+                                    <h2 class="congrats-overlay-title">Happy Diwali!</h2>
+                                    <p class="congrats-overlay-subtitle">Your Special Surprise is Here!</p>
+                                    <div class="congrats-overlay-offer animate-pulse"></div>
                                     <div class="congrats-overlay-coupon" style="display: none;">
                                         <span class="coupon-label">Coupon Code:</span>
                                         <span class="coupon-code">OFF50</span>
@@ -135,21 +134,44 @@
                             </div>
 
                             <!-- Canvas Layer (Scratchable front) -->
-                            <canvas id="scratch-canvas" width="300" height="300"></canvas>
+                            <!-- Diwali Lamp Lighting Stage -->
+                            <div id="diwali-lamp-stage" class="diwali-lamp-stage">
+                                <div id="diya-ambient-glow" class="diya-ambient-glow"></div>
+                                <div id="golden-light-wave" class="golden-light-wave"></div>
+                                <div id="ignition-flash" class="ignition-flash"></div>
+
+                                <div class="diya-stage-wrapper">
+                                    <!-- Unlit 3D Diya Base Asset -->
+                                    <img id="diya-unlit-img" src="assets/png/diya-unlit.png" alt="Diwali Diya" class="diya-img diya-unlit-img" />
+                                    <!-- Lit Diya Flame Overlay Asset -->
+                                    <img id="diya-lit-img" src="assets/png/diya-lit-flame.png" alt="Lit Diya Flame" class="diya-img diya-lit-img" />
+
+                                    <!-- Wick Target Zone -->
+                                    <div id="diya-wick-target" class="diya-wick-target" aria-label="Diya Wick Target">
+                                        <div class="wick-guide-ring"></div>
+                                        <div class="wick-glow-ember"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Floating Draggable Flame Asset -->
+                                <div id="draggable-floating-flame" class="draggable-floating-flame" role="button" aria-grabbed="false" aria-label="Floating Flame - Drag to light the Diya" tabindex="0">
+                                    <div class="floating-flame-aura"></div>
+                                    <img src="assets/png/floating-flame.png" alt="Floating Flame" class="floating-flame-img" draggable="false" />
+                                    <div class="flame-drag-hint">DRAG ME</div>
+                                </div>
+                            </div>
+
+                            <!-- Canvas Layer (hidden for backward compatibility) -->
+                            <canvas id="scratch-canvas" width="300" height="300" style="display: none;"></canvas>
                         </div>
 
-                        <!-- Small supporting phrase below scratch area -->
-                        <div style="text-align: center; margin-top: 15px;">
-                            <span style="color: #0f3f22; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2; display: inline-block;">
-                                Exclusive offer on <span style="font-size: 15px; color: #B4883C;">delivery and</span> <br>
-                                <span style="font-size: 15px; color: #B4883C;">takeaway</span> orders only.
-                            </span>
-                        </div>
+                        <p class="card-offer-support">Exclusive offer on <strong>delivery and takeaway</strong> orders only.</p>
                     </div>
                 </div>
 
                 <!-- Scratch Progress Indicator / Continue Button -->
-                <div id="scratch-progress-area" class="scratch-progress-container">
+                <!-- Hidden Scratch Progress for backward compatibility -->
+                <div id="scratch-progress-area" class="scratch-progress-container" style="display: none;">
                     <div class="progress-bar-track">
                         <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
                     </div>
@@ -341,28 +363,6 @@
 
         <!-- Premium Arabian Majlis Footer -->
         <footer class="global-footer">
-            <div class="footer-divider">
-                <span class="divider-line"></span>
-                <span class="divider-diamond">◆</span>
-                <span class="divider-line"></span>
-            </div>
-
-            <div class="footer-brand">ARABIAN MAJLIS</div>
-            <div class="footer-locations">
-                <div class="location-pill">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                    Koduvally Bus Stand Ln, Koduvally
-                </div>
-                <div class="location-pill">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                    Coimbatore
-                </div>
-                <div class="location-pill">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-                    Perinthalmanna road - Wandoor
-                </div>
-            </div>
-
             <div class="footer-website">
                 <a href="https://www.arabianmajlislyf.com/" target="_blank" rel="noopener noreferrer"
                     class="footer-link">
@@ -391,6 +391,26 @@
         </footer>
 
     </main>
+
+    <!-- Diwali offer reveal, retaining the production reward and claim flow. -->
+    <div id="offer-modal" class="offer-modal-backdrop" aria-hidden="true">
+        <div class="offer-modal-card" role="dialog" aria-modal="true" aria-labelledby="offer-modal-heading">
+            <div class="modal-content-relative">
+                <span class="modal-diwali-lamp-icon" aria-hidden="true">🪔</span>
+                <p class="modal-diwali-heading">Happy Diwali!</p>
+                <h2 class="modal-diwali-sub" id="offer-modal-heading">Your Special Surprise is Here!</h2>
+                <div class="modal-offer-badge-box">
+                    <p class="modal-offer-label-prefix">Exclusive Festive Reward</p>
+                    <div class="modal-offer-amount" id="modal-offer-text"></div>
+                    <p class="modal-offer-terms">Exclusive offer on delivery &amp; takeaway</p>
+                </div>
+                <button type="button" id="btn-proceed-to-claim" class="btn-claim-festive">
+                    <span>Claim Your Festive Offer</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Claim Lookup Modal Dialog -->
     <div id="modal-claim-lookup" class="lookup-modal-overlay hidden">
@@ -422,7 +442,7 @@
 
 
     <!-- Client-side script -->
-    <script src="script.js?v=4"></script>
+    <script src="script.js?v=5"></script>
 </body>
 
 </html>

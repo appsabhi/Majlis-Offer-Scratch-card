@@ -16,12 +16,12 @@ const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyXm_94jL
 //   isWinner   — true if this is a real prize; false for "Better Luck" outcomes
 // ==========================================================================
 const REWARD_POOL = [
-    { id: "offer50Rs",          label: `₹50 OFF <br> on bill above ₹499`,   coupon: "OFF50",  isWinner: true },
-    { id: "offer75Rs",          label: `₹75 OFF <br> on bill above ₹699`,   coupon: "OFF75",  isWinner: true },
-    { id: "offer100Rs",         label: `₹100 OFF <br> on bill above ₹999`,  coupon: "OFF100", isWinner: true },
-    { id: "offer150Rs",         label: `₹150 OFF <br> on bill above ₹1299`, coupon: "OFF150", isWinner: true },
-    { id: "offer5PercentNext",  label: `5% OFF <br> on next purchase`,       coupon: "NEXT5",  isWinner: true },
-    { id: "offer10PercentNext", label: `10% OFF <br> on next purchase`,      coupon: "NEXT10", isWinner: true }
+    // { id: "offerdelivery",          label: `₹50 OFF <br> on bill above ₹499`,   coupon: "OFF50",  isWinner: true },
+    // { id: "offer75Rs",          label: `₹75 OFF <br> on bill above ₹699`,   coupon: "OFF75",  isWinner: true },
+    // { id: "offer100Rs",         label: `₹100 OFF <br> on bill above ₹999`,  coupon: "OFF100", isWinner: true },
+    // { id: "offer150Rs",         label: `₹150 OFF <br> on bill above ₹1299`, coupon: "OFF150", isWinner: true },
+    // { id: "offer5PercentNext",  label: `5% OFF <br> on next purchase`,       coupon: "NEXT5",  isWinner: true },
+    { id: "offer10PercentNext", label: `5% OFF <br> on delivery orders`,      coupon: "NEXT10", isWinner: true }
 ];
 
 // Legacy reward map to ensure users who previously claimed old campaign offers keep their exact claimed reward when returning
@@ -370,6 +370,8 @@ function applyRewardToDOM() {
     const btnSubmitTextEl     = document.querySelector("#btn-submit-form .btn-text");
 
     if (offerAmountEl)       offerAmountEl.innerHTML       = r.label;
+    const modalOfferText = document.getElementById("modal-offer-text");
+    if (modalOfferText) modalOfferText.innerHTML = r.label;
     if (overlayOfferEl)      overlayOfferEl.innerHTML      = r.label;
     if (congratsOfferAmtEl)  congratsOfferAmtEl.innerHTML  = r.label;
     if (ticketPercentEl)     ticketPercentEl.innerHTML     = r.label;
@@ -460,15 +462,34 @@ document.addEventListener("DOMContentLoaded", () => {
     const instagramInitialState = document.getElementById("instagram-initial-state");
     const instagramSuccessState = document.getElementById("instagram-success-state");
 
-    // --- Scratch Canvas Elements ---
+    // --- Scratch Canvas Elements (kept for backwards compatibility) ---
     const canvas = document.getElementById("scratch-canvas");
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    const ctx = canvas ? canvas.getContext("2d", { willReadFrequently: true }) : null;
     const progressBarFill = document.getElementById("progress-bar-fill");
     const scratchProgressText = document.getElementById("scratch-progress-text");
     const scratchProgressArea = document.getElementById("scratch-progress-area");
     const scratchContinueArea = document.getElementById("scratch-continue-area");
     const btnScratchContinue = document.getElementById("btn-scratch-continue");
     const congratsOverlay = document.getElementById("congrats-overlay");
+    const offerModal = document.getElementById("offer-modal");
+    const btnProceedToClaim = document.getElementById("btn-proceed-to-claim");
+
+    // --- Diwali Lamp Experience Elements ---
+    const lampStage = document.getElementById("diwali-lamp-stage");
+    const diyaAmbientGlow = document.getElementById("diya-ambient-glow");
+    const goldenLightWave = document.getElementById("golden-light-wave");
+    const ignitionFlash = document.getElementById("ignition-flash");
+    const diyaUnlitImg = document.getElementById("diya-unlit-img");
+    const diyaLitImg = document.getElementById("diya-lit-img");
+    const diyaWickTarget = document.getElementById("diya-wick-target");
+    const diyaStageWrapper = document.querySelector(".diya-stage-wrapper");
+    const floatingFlame = document.getElementById("draggable-floating-flame");
+    const diwaliInstructionArea = document.getElementById("diwali-instruction-area");
+    const diwaliInstructionPill = document.getElementById("diwali-instruction-pill");
+    const diwaliInstructionText = document.getElementById("diwali-instruction-text");
+
+    // Keep the flame in the viewport layer so it can travel over the card and page.
+    if (floatingFlame && document.body) document.body.appendChild(floatingFlame);
 
     // --- State Variables ---
     let isDrawing = false;
@@ -478,6 +499,13 @@ document.addEventListener("DOMContentLoaded", () => {
     let lastPercentCheck = 0;
     let scratchProgress = 0;
     let isInstagramClicked = false;
+    let isDraggingFlame = false;
+    let flameDragStartX = 0;
+    let flameDragStartY = 0;
+    let flameCurrentX = 0;
+    let flameCurrentY = 0;
+    let isIgnited = false;
+    let hasInitializedDiwaliEvents = false;
 
     // --- Confetti Variables & Setup ---
     const confettiCanvas = document.getElementById("confetti-canvas");
@@ -485,6 +513,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let confettiParticles = [];
     let isConfettiRunning = false;
     let confettiAnimationId = null;
+    let sparkleParticles = [];
+    let sparkleAnimationId = null;
 
     /**
      * Instantly positions viewport at the card section without any visible scrolling animation.
@@ -538,260 +568,233 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ==========================================================================
-    // 3. CANVAS SCRATCH CARD LOGIC
+    // 3. DIWALI 3D LAMP LIGHTING LOGIC & INTERACTION
     // ==========================================================================
-    function initScratchCanvas() {
-        // Check if already revealed in persistent storage
-        let savedRevealed = false;
-        try {
-            savedRevealed = safeStorage.getItem(getRevealedStorageKey()) === "true";
-        } catch (e) {
-            console.warn(e);
-        }
-
-        if (savedRevealed) {
-            isRevealed = true;
-            scratchProgress = 100;
-            progressBarFill.style.width = "100%";
-            scratchProgressText.innerText = sessionReward.isWinner ? "Revealed! 🎉" : "Revealed! 🍀";
-            canvas.style.opacity = "0";
-            canvas.style.pointerEvents = "none";
-            
-            if (congratsOverlay) {
-                if (sessionReward.isWinner) {
-                    congratsOverlay.classList.remove("hidden");
-                    congratsOverlay.classList.add("show");
-                } else {
-                    congratsOverlay.classList.add("hidden");
-                    congratsOverlay.classList.remove("show");
-                }
-            }
-            if (scratchProgressArea) {
-                scratchProgressArea.classList.add("hidden");
-            }
-            if (scratchContinueArea) {
-                scratchContinueArea.classList.add("hidden");
-            }
-            return;
-        }
-
-        // Reset properties
-        isRevealed = false;
-        scratchProgress = 0;
-        progressBarFill.style.width = "0%";
-        scratchProgressText.innerText = "Scratch: 0%";
-        canvas.style.opacity = "1";
-        canvas.style.pointerEvents = "auto";
-
-        // Reset congratulations overlay
-        if (congratsOverlay) {
-            congratsOverlay.classList.add("hidden");
-            congratsOverlay.classList.remove("show");
-        }
-        
-        // Reset progress/continue button visibility
-        if (scratchProgressArea && scratchContinueArea) {
-            scratchProgressArea.classList.remove("hidden");
-            scratchContinueArea.classList.add("hidden");
-        }
-
-        // Ensure proper resolutions for retina / high-DPI screens
-        const size = 300; 
-        canvas.width = size;
-        canvas.height = size;
-
-        // Draw Cover Layer
-        drawScratchCover();
-    }
-
-    function drawScratchCover() {
-        ctx.save();
-        
-        // Premium Arabian green gradient
-        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        grad.addColorStop(0, '#073520'); // Deep forest green
-        grad.addColorStop(0.5, '#0c472d'); // Rich mid green
-        grad.addColorStop(1, '#052a19'); // Dark shadow green
-        
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
-
-        // Draw elegant concentric Arabian diamond patterns
-        ctx.strokeStyle = "rgba(197, 160, 89, 0.15)";
-        ctx.lineWidth = 1.5;
-        for (let r = 20; r <= 100; r += 20) {
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY - r);
-            ctx.lineTo(centerX + r, centerY);
-            ctx.lineTo(centerX, centerY + r);
-            ctx.lineTo(centerX - r, centerY);
-            ctx.closePath();
-            ctx.stroke();
-        }
-        
-        // Draw elegant radiating geometric lines
-        ctx.strokeStyle = "rgba(197, 160, 89, 0.08)";
-        ctx.lineWidth = 1;
-        for (let i = 0; i < 8; i++) {
-            const angle = (i * Math.PI) / 4;
-            ctx.beginPath();
-            ctx.moveTo(centerX, centerY);
-            ctx.lineTo(
-                centerX + Math.cos(angle) * 120,
-                centerY + Math.sin(angle) * 120
-            );
-            ctx.stroke();
-        }
-
-        // Draw elegant gold double frame border
-        ctx.strokeStyle = "rgba(197, 160, 89, 0.4)";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
-
-        ctx.strokeStyle = "rgba(197, 160, 89, 0.2)";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(12, 12, canvas.width - 24, canvas.height - 24);
-
-        // Scratch Text Label
-        ctx.fillStyle = "#faf7f2"; // Cream white text
-        ctx.font = "600 14px 'Poppins', sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        
-        // Text drop shadow (canvas style)
-        ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 1.5;
-        
-        ctx.fillText("SCRATCH TO REVEAL 👆", centerX, centerY);
-        
-        ctx.restore();
-    }
-
-    // Event Coordinators
-    function getMousePos(e) {
-        const rect = canvas.getBoundingClientRect();
-        // Calculate coordinate scale in case canvas element width/height differs from css client width/height
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-
-        let clientX, clientY;
-        
-        if (e.touches && e.touches.length > 0) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else {
-            clientX = e.clientX;
-            clientY = e.clientY;
-        }
-
+    function getElementCenter(el) {
+        if (!el) return { x: 0, y: 0 };
+        const rect = el.getBoundingClientRect();
         return {
-            x: (clientX - rect.left) * scaleX,
-            y: (clientY - rect.top) * scaleY
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
         };
     }
 
-    function startScratching(e) {
-        if (isRevealed) return;
-        isDrawing = true;
-        const pos = getMousePos(e);
-        lastX = pos.x;
-        lastY = pos.y;
-    }
+    // The wick is centered in the source artwork at roughly 28.6% of its
+    // rendered height. Derive its viewport and wrapper coordinates from the
+    // actual image rectangle so the target remains attached at every size.
+    function alignDiyaFlameToWick() {
+        if (!diyaUnlitImg || !diyaWickTarget || !diyaStageWrapper) return;
 
-    function scratch(e) {
-        if (!isDrawing || isRevealed) return;
-        if (e.cancelable) e.preventDefault(); // Prevents dragging/scrolling on mobile devices
+        const diyaRect = diyaUnlitImg.getBoundingClientRect();
+        const wrapperRect = diyaStageWrapper.getBoundingClientRect();
+        if (!diyaRect.width || !diyaRect.height || !wrapperRect.width) return;
 
-        const pos = getMousePos(e);
-        
-        ctx.save();
-        ctx.globalCompositeOperation = 'destination-out'; // Transparent paint brush
-        ctx.beginPath();
-        ctx.moveTo(lastX, lastY);
-        ctx.lineTo(pos.x, pos.y);
-        ctx.lineWidth = 42; // Brush size
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.stroke();
-        ctx.restore();
+        const wickX = diyaRect.left + diyaRect.width * 0.5;
+        const wickY = diyaRect.top + diyaRect.height * 0.286;
+        diyaWickTarget.style.left = `${wickX - wrapperRect.left}px`;
+        diyaWickTarget.style.top = `${wickY - wrapperRect.top}px`;
 
-        lastX = pos.x;
-        lastY = pos.y;
-
-        // Perform throttled scratch percentage check
-        const now = Date.now();
-        if (now - lastPercentCheck > 120) {
-            lastPercentCheck = now;
-            checkScratchPercentage();
+        if (diyaLitImg) {
+            const flameWidth = parseFloat(window.getComputedStyle(diyaLitImg).width);
+            const flameHeight = parseFloat(window.getComputedStyle(diyaLitImg).height);
+            if (flameWidth > 0 && flameHeight > 0) {
+                // The PNG's visible flame base ends at ~90% of its canvas.
+                // Anchor that edge to the wick rather than centering the PNG.
+                diyaLitImg.style.left = `${wickX - wrapperRect.left - flameWidth / 2}px`;
+                diyaLitImg.style.top = `${wickY - wrapperRect.top - flameHeight * 0.9}px`;
+            }
         }
     }
 
-    function stopScratching() {
-        if (isDrawing) {
-            isDrawing = false;
-            checkScratchPercentage(); // final check on release
+    if (diyaStageWrapper) {
+        if (typeof ResizeObserver !== "undefined") {
+            const diyaResizeObserver = new ResizeObserver(alignDiyaFlameToWick);
+            diyaResizeObserver.observe(diyaStageWrapper);
+        } else {
+            window.addEventListener("resize", alignDiyaFlameToWick, { passive: true });
+        }
+        if (diyaUnlitImg) diyaUnlitImg.addEventListener("load", alignDiyaFlameToWick);
+        if (diyaLitImg) diyaLitImg.addEventListener("load", alignDiyaFlameToWick);
+        requestAnimationFrame(alignDiyaFlameToWick);
+    }
+
+    function checkWickProximity() {
+        if (!floatingFlame || !diyaWickTarget) return;
+
+        const flameCenter = getElementCenter(floatingFlame);
+        const wickCenter = getElementCenter(diyaWickTarget);
+
+        const dx = flameCenter.x - wickCenter.x;
+        const dy = flameCenter.y - wickCenter.y;
+        const distance = Math.hypot(dx, dy);
+
+        // Near wick visual feedback (glowing ring & pill highlight)
+        if (distance < 75) {
+            diyaWickTarget.classList.add("near");
+            if (diwaliInstructionPill) diwaliInstructionPill.classList.add("highlight");
+        } else {
+            diyaWickTarget.classList.remove("near");
+            if (diwaliInstructionPill) diwaliInstructionPill.classList.remove("highlight");
+        }
+
+        // Contact ignition threshold
+        if (distance < 30) {
+            igniteDiya();
         }
     }
 
-    function checkScratchPercentage() {
-        if (isRevealed) return;
+    function onFlamePointerDown(e) {
+        if (isIgnited || isRevealed || !floatingFlame) return;
+        if (e.button !== undefined && e.button !== 0) return; // Primary mouse button only
 
-        try {
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const pixels = imgData.data;
-            const totalPixels = pixels.length / 4;
-            let transparentPixels = 0;
+        isDraggingFlame = true;
+        floatingFlame.classList.add("dragging");
+        floatingFlame.style.transition = "none";
 
-            // Optimize: Check every 8th pixel (32 bytes jump) for fast responsive calculations
-            for (let i = 3; i < pixels.length; i += 32) {
-                if (pixels[i] === 0) {
-                    transparentPixels++;
+        if (floatingFlame.setPointerCapture && e.pointerId !== undefined) {
+            try {
+                floatingFlame.setPointerCapture(e.pointerId);
+            } catch (err) {}
+        }
+
+        flameDragStartX = e.clientX - flameCurrentX;
+        flameDragStartY = e.clientY - flameCurrentY;
+
+        if (e.cancelable) e.preventDefault();
+    }
+
+    function onFlamePointerMove(e) {
+        if (!isDraggingFlame || isIgnited || isRevealed || !floatingFlame) return;
+        if (e.cancelable) e.preventDefault();
+
+        const flameRect = floatingFlame.getBoundingClientRect();
+        const originX = flameRect.left - flameCurrentX;
+        const originY = flameRect.top - flameCurrentY;
+        const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        const minX = -originX;
+        const maxX = Math.max(minX, window.innerWidth - originX - floatingFlame.offsetWidth);
+        const minY = -originY;
+        const maxY = Math.max(minY, viewportHeight - originY - floatingFlame.offsetHeight);
+
+        flameCurrentX = Math.min(maxX, Math.max(minX, e.clientX - flameDragStartX));
+        flameCurrentY = Math.min(maxY, Math.max(minY, e.clientY - flameDragStartY));
+
+        floatingFlame.style.transform = `translate3d(${flameCurrentX}px, ${flameCurrentY}px, 0) scale(1.15)`;
+        checkWickProximity();
+    }
+
+    function onFlamePointerUp(e) {
+        if (!isDraggingFlame || isIgnited || !floatingFlame) return;
+        isDraggingFlame = false;
+        floatingFlame.classList.remove("dragging");
+
+        if (diyaWickTarget) diyaWickTarget.classList.remove("near");
+        if (diwaliInstructionPill) diwaliInstructionPill.classList.remove("highlight");
+
+        if (floatingFlame.releasePointerCapture && e && e.pointerId !== undefined) {
+            try {
+                floatingFlame.releasePointerCapture(e.pointerId);
+            } catch (err) {}
+        }
+
+        // Smooth spring return to origin if dropped before reaching wick
+        floatingFlame.style.transition = "transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)";
+        flameCurrentX = 0;
+        flameCurrentY = 0;
+        floatingFlame.style.transform = "translate3d(0, 0, 0)";
+
+        setTimeout(() => {
+            if (!isDraggingFlame && !isIgnited && floatingFlame) {
+                floatingFlame.style.transition = "";
+            }
+        }, 460);
+    }
+
+    function animateFlameToWick() {
+        if (isIgnited || isRevealed || !floatingFlame || !diyaWickTarget) return;
+
+        const flameCenter = getElementCenter(floatingFlame);
+        const wickCenter = getElementCenter(diyaWickTarget);
+        const deltaX = wickCenter.x - flameCenter.x;
+        const deltaY = wickCenter.y - flameCenter.y;
+
+        floatingFlame.style.transition = "transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)";
+        floatingFlame.style.transform = `translate3d(${flameCurrentX + deltaX}px, ${flameCurrentY + deltaY}px, 0) scale(1.1)`;
+
+        setTimeout(() => {
+            igniteDiya();
+        }, 520);
+    }
+
+    function igniteDiya() {
+        if (isIgnited) return;
+        isIgnited = true;
+        isDraggingFlame = false;
+
+        // 1. Floating flame absorbs into wick
+        if (floatingFlame) {
+            floatingFlame.classList.remove("dragging");
+            floatingFlame.classList.add("absorbing");
+        }
+
+        // 2. Trigger ignition flash & golden light wave
+        if (ignitionFlash) {
+            ignitionFlash.classList.remove("flash");
+            void ignitionFlash.offsetWidth; // force reflow
+            ignitionFlash.classList.add("flash");
+        }
+
+        if (goldenLightWave) {
+            goldenLightWave.classList.remove("burst");
+            void goldenLightWave.offsetWidth;
+            goldenLightWave.classList.add("burst");
+        }
+
+        // 3. Bloom Diya lit flame layer and ambient glow
+        if (diyaLitImg) {
+            diyaLitImg.classList.add("lit");
+        }
+        if (diyaAmbientGlow) {
+            diyaAmbientGlow.classList.add("lit");
+        }
+        if (diyaWickTarget) {
+            diyaWickTarget.classList.add("lit");
+            diyaWickTarget.classList.remove("near");
+        }
+
+        // 4. Update instruction pill
+        if (diwaliInstructionPill) {
+            diwaliInstructionPill.classList.remove("highlight");
+            diwaliInstructionPill.classList.add("ignited");
+        }
+        if (diwaliInstructionText) {
+            diwaliInstructionText.innerText = "Diya is Lit! ✨ Your Diwali Gift Awakens...";
+        }
+
+        // 5. Trigger offer reveal
+        triggerFestiveConfetti();
+        revealOffer();
+        if (offerModal) {
+            window.setTimeout(() => {
+                if (!isClaimedState()) {
+                    offerModal.classList.add("show");
+                    offerModal.setAttribute("aria-hidden", "false");
                 }
-            }
-
-            // Multiplying back by 8 since we sampled 1/8th of pixels
-            const percentage = Math.min(((transparentPixels * 8) / totalPixels) * 100, 100);
-            
-            scratchProgress = Math.round(percentage);
-            progressBarFill.style.width = `${scratchProgress}%`;
-            scratchProgressText.innerText = `Scratch: ${scratchProgress}%`;
-
-            // Reveal threshold reached
-            if (scratchProgress >= 50) {
-                revealOffer();
-            }
-        } catch (err) {
-            console.warn("[Majlis] Error calculating scratch percentage:", err);
+            }, 1500);
         }
     }
 
     function revealOffer() {
         isRevealed = true;
-        isDrawing = false;
-        
-        progressBarFill.style.width = "100%";
-        scratchProgressText.innerText = sessionReward.isWinner ? "Revealed! 🎉" : "Revealed! 🍀";
+
+        if (progressBarFill) progressBarFill.style.width = "100%";
+        if (scratchProgressText) scratchProgressText.innerText = (sessionReward && sessionReward.isWinner) ? "Revealed! 🎉" : "Revealed! 🍀";
 
         // Save scratch revealed state to safeStorage
         try {
             safeStorage.setItem(getRevealedStorageKey(), "true");
         } catch (e) {
             console.warn(e);
-        }
-
-        // Smooth fade out animation for the canvas layer
-        canvas.style.transition = "opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1)";
-        canvas.style.opacity = "0";
-        canvas.style.pointerEvents = "none";
-
-        // Confetti party only for winners
-        if (sessionReward.isWinner) {
-            triggerConfetti();
         }
 
         // Hide progress bar area cleanly when revealed (surrounding layout stays stable)
@@ -803,42 +806,193 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Animate congratulations overlay into view inside the scratch card only for winners
-        if (sessionReward.isWinner && congratsOverlay) {
-            congratsOverlay.classList.remove("hidden");
-            // Force reflow to trigger scale transition animation
-            void congratsOverlay.offsetWidth;
-            congratsOverlay.classList.add("show");
-        }
+        setTimeout(() => {
+            if (sessionReward && sessionReward.isWinner && congratsOverlay) {
+                congratsOverlay.classList.remove("hidden");
+                void congratsOverlay.offsetWidth;
+                congratsOverlay.classList.add("show");
+            }
+            if (diwaliInstructionText) {
+                diwaliInstructionText.innerText = "Happy Diwali! Claim your gift below 🎁";
+            }
+        }, 650);
 
         // Enable the form submit button if winner
-        if (sessionReward.isWinner && btnSubmitForm) {
+        if (sessionReward && sessionReward.isWinner && btnSubmitForm) {
             btnSubmitForm.disabled = false;
             btnSubmitForm.classList.remove("btn-locked");
         }
     }
 
-    // Attach Scratch Canvas Event Listeners cleanly with touch/pointer interruption handling
-    canvas.addEventListener("mousedown", startScratching);
-    canvas.addEventListener("mousemove", scratch);
-    window.addEventListener("mouseup", stopScratching);
+    function initDiwaliDragEvents() {
+        if (hasInitializedDiwaliEvents || !floatingFlame) return;
+        hasInitializedDiwaliEvents = true;
 
-    canvas.addEventListener("touchstart", (e) => {
-        if (e.cancelable) e.preventDefault();
-        startScratching(e);
-    }, { passive: false });
-    canvas.addEventListener("touchmove", scratch, { passive: false });
-    window.addEventListener("touchend", stopScratching);
-    window.addEventListener("touchcancel", stopScratching);
+        let dragMoved = false;
 
-    if (window.PointerEvent) {
-        canvas.addEventListener("pointerdown", (e) => {
-            if (e.pointerType === "touch" && e.cancelable) e.preventDefault();
-            startScratching(e);
+        if (window.PointerEvent) {
+            floatingFlame.addEventListener("pointerdown", (e) => {
+                dragMoved = false;
+                onFlamePointerDown(e);
+            });
+
+            window.addEventListener("pointermove", (e) => {
+                if (isDraggingFlame) {
+                    dragMoved = true;
+                    onFlamePointerMove(e);
+                }
+            });
+
+            window.addEventListener("pointerup", (e) => {
+                if (isDraggingFlame) {
+                    onFlamePointerUp(e);
+                }
+            });
+
+            window.addEventListener("pointercancel", (e) => {
+                if (isDraggingFlame) {
+                    onFlamePointerUp(e);
+                }
+            });
+        } else {
+            // Touch & Mouse fallback
+            floatingFlame.addEventListener("mousedown", (e) => {
+                dragMoved = false;
+                onFlamePointerDown(e);
+            });
+            window.addEventListener("mousemove", (e) => {
+                if (isDraggingFlame) {
+                    dragMoved = true;
+                    onFlamePointerMove(e);
+                }
+            });
+            window.addEventListener("mouseup", (e) => {
+                if (isDraggingFlame) onFlamePointerUp(e);
+            });
+
+            floatingFlame.addEventListener("touchstart", (e) => {
+                dragMoved = false;
+                if (e.touches && e.touches.length > 0) {
+                    const touch = e.touches[0];
+                    onFlamePointerDown({
+                        clientX: touch.clientX,
+                        clientY: touch.clientY,
+                        cancelable: e.cancelable,
+                        preventDefault: () => e.preventDefault()
+                    });
+                }
+            }, { passive: false });
+
+            window.addEventListener("touchmove", (e) => {
+                if (isDraggingFlame && e.touches && e.touches.length > 0) {
+                    dragMoved = true;
+                    const touch = e.touches[0];
+                    onFlamePointerMove({
+                        clientX: touch.clientX,
+                        clientY: touch.clientY,
+                        cancelable: e.cancelable,
+                        preventDefault: () => e.preventDefault()
+                    });
+                }
+            }, { passive: false });
+
+            window.addEventListener("touchend", () => {
+                if (isDraggingFlame) onFlamePointerUp();
+            });
+        }
+
+        // Tap/Click fallback: clicking flame directly guides it to the wick
+        floatingFlame.addEventListener("click", (e) => {
+            if (!dragMoved && !isIgnited) {
+                animateFlameToWick();
+            }
         });
-        canvas.addEventListener("pointermove", scratch);
-        window.addEventListener("pointerup", stopScratching);
-        window.addEventListener("pointercancel", stopScratching);
+
+        // Accessibility keyboard support (Enter / Space)
+        floatingFlame.addEventListener("keydown", (e) => {
+            if ((e.key === "Enter" || e.key === " ") && !isIgnited) {
+                e.preventDefault();
+                animateFlameToWick();
+            }
+        });
+
+        // Clicking the wick directly also guides flame to wick
+        if (diyaWickTarget) {
+            diyaWickTarget.style.cursor = "pointer";
+            diyaWickTarget.addEventListener("click", () => {
+                if (!isIgnited) {
+                    animateFlameToWick();
+                }
+            });
+        }
     }
+
+    function initScratchCanvas() {
+        // Check if already revealed in persistent storage
+        let savedRevealed = false;
+        try {
+            savedRevealed = safeStorage.getItem(getRevealedStorageKey()) === "true";
+        } catch (e) {
+            console.warn(e);
+        }
+
+        if (savedRevealed) {
+            isRevealed = true;
+            isIgnited = true;
+
+            if (diyaLitImg) diyaLitImg.classList.add("lit");
+            if (diyaAmbientGlow) diyaAmbientGlow.classList.add("lit");
+            if (diyaWickTarget) diyaWickTarget.classList.add("lit");
+            if (floatingFlame) floatingFlame.classList.add("ignited");
+            if (diwaliInstructionPill) diwaliInstructionPill.classList.add("ignited");
+            if (diwaliInstructionText) diwaliInstructionText.innerText = "Diya Lit! Enjoy your surprise 🪔";
+            if (offerModal && !isClaimedState()) {
+                offerModal.classList.add("show");
+                offerModal.setAttribute("aria-hidden", "false");
+            }
+
+            if (congratsOverlay) {
+                if (sessionReward && sessionReward.isWinner) {
+                    congratsOverlay.classList.remove("hidden");
+                    congratsOverlay.classList.add("show");
+                } else {
+                    congratsOverlay.classList.add("hidden");
+                    congratsOverlay.classList.remove("show");
+                }
+            }
+            if (scratchProgressArea) scratchProgressArea.classList.add("hidden");
+            if (scratchContinueArea) scratchContinueArea.classList.add("hidden");
+            return;
+        }
+
+        // Reset properties for fresh unlit interaction
+        isRevealed = false;
+        isIgnited = false;
+        isDraggingFlame = false;
+        flameCurrentX = 0;
+        flameCurrentY = 0;
+
+        if (floatingFlame) {
+            floatingFlame.classList.remove("dragging", "absorbing", "ignited");
+            floatingFlame.style.transform = "translate3d(0, 0, 0)";
+            floatingFlame.style.transition = "";
+        }
+        if (diyaLitImg) diyaLitImg.classList.remove("lit");
+        if (diyaAmbientGlow) diyaAmbientGlow.classList.remove("lit");
+        if (diyaWickTarget) diyaWickTarget.classList.remove("lit", "near");
+        if (diwaliInstructionPill) diwaliInstructionPill.classList.remove("highlight", "ignited");
+        if (diwaliInstructionText) diwaliInstructionText.innerText = "Drag the little flame to light the Diya";
+
+        // Reset congratulations overlay
+        if (congratsOverlay) {
+            congratsOverlay.classList.add("hidden");
+            congratsOverlay.classList.remove("show");
+        }
+
+        // Attach events
+        initDiwaliDragEvents();
+    }
+
 
     // ==========================================================================
     // 4. VANILLA PARTY CONFETTI ANIMATION
@@ -945,6 +1099,67 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
         animateConfetti();
+    }
+
+    // The Diwali page's original golden star and sparkle burst, rendered on
+    // the production page's existing full-screen canvas.
+    function triggerFestiveConfetti() {
+        resizeConfettiCanvas();
+        sparkleParticles = [];
+        const colors = ["#ffd700", "#ffaa00", "#ff5722", "#fff59d", "#ffffff", "#4caf50", "#dfc896"];
+        for (let i = 0; i < 90; i++) {
+            sparkleParticles.push({
+                x: window.innerWidth * 0.5 + (Math.random() - 0.5) * 80,
+                y: window.innerHeight * 0.45,
+                vx: (Math.random() - 0.5) * 14,
+                vy: -Math.random() * 14 - 4,
+                size: Math.random() * 6 + 3,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                alpha: 1,
+                rotation: Math.random() * 360,
+                vRot: (Math.random() - 0.5) * 12,
+                shape: Math.random() > 0.4 ? "star" : "circle"
+            });
+        }
+        if (sparkleAnimationId) cancelAnimationFrame(sparkleAnimationId);
+        function renderSparkles() {
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            let alive = 0;
+            for (const p of sparkleParticles) {
+                if (p.alpha <= 0.01) continue;
+                alive++;
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.35;
+                p.vx *= 0.98;
+                p.alpha -= 0.012;
+                p.rotation += p.vRot;
+                confettiCtx.save();
+                confettiCtx.translate(p.x, p.y);
+                confettiCtx.rotate((p.rotation * Math.PI) / 180);
+                confettiCtx.globalAlpha = Math.max(0, p.alpha);
+                confettiCtx.fillStyle = p.color;
+                if (p.shape === "star") {
+                    const radius = p.size;
+                    confettiCtx.beginPath();
+                    confettiCtx.moveTo(0, -radius);
+                    confettiCtx.quadraticCurveTo(0, 0, radius, 0);
+                    confettiCtx.quadraticCurveTo(0, 0, 0, radius);
+                    confettiCtx.quadraticCurveTo(0, 0, -radius, 0);
+                    confettiCtx.quadraticCurveTo(0, 0, 0, -radius);
+                    confettiCtx.closePath();
+                    confettiCtx.fill();
+                } else {
+                    confettiCtx.beginPath();
+                    confettiCtx.arc(0, 0, p.size * 0.5, 0, Math.PI * 2);
+                    confettiCtx.fill();
+                }
+                confettiCtx.restore();
+            }
+            if (alive) sparkleAnimationId = requestAnimationFrame(renderSparkles);
+            else confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        }
+        renderSparkles();
     }
 
     // Listen to resize to keep confetti canvas responsive
@@ -1396,6 +1611,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnScratchContinue) {
         btnScratchContinue.addEventListener("click", () => {
+            showScreen(screenForm);
+        });
+    }
+
+    if (btnProceedToClaim) {
+        btnProceedToClaim.addEventListener("click", () => {
+            offerModal.classList.remove("show");
+            offerModal.setAttribute("aria-hidden", "true");
             showScreen(screenForm);
         });
     }

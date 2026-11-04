@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Majlis Kerala - Diwali Festive Surprise</title>
+    <link rel="icon" href="./assets/png/Vector Smart Object copy 12.png" type="image/png">
+    
+    <!-- Google Fonts for Festive Premium Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Diwali Festive Styles -->
+    <link rel="stylesheet" href="diwali.css">
+</head>
+<body>
+
+    <!-- Sparkle Canvas for celebratory particles -->
+    <canvas id="diwali-sparkle-canvas"></canvas>
+
+    <!-- Main Container -->
+    <main class="app-container">
+
+        <!-- Global Header with official Majlis logo -->
+        <header class="global-header">
+            <img src="assets/png/majlis Logo(white).png" alt="Arabian Majlis" class="global-logo">
+            <div class="diwali-badge-pill">
+                <span>🪔</span>
+                <span>Diwali Festival Of Lights</span>
+                <span>✨</span>
+            </div>
+        </header>
+
+        <!-- ==================== SCREEN 1: 3D CARTOON DIYA LIGHTING STAGE ==================== -->
+        <section id="screen-diwali" class="screen-card active">
+            <div class="diwali-card-outer">
+                
+                <!-- Campaign Headline Block -->
+                <div class="campaign-header-block">
+                    <span class="campaign-tagline">Festival of Lights</span>
+                    <h1 class="campaign-headline">LIGHT THE DIYA & WIN!</h1>
+                    <p class="campaign-subhead">Drag the matchstick to light up the sacred lamp and unlock your exclusive Arabian Majlis festive offer!</p>
+                </div>
+
+                <!-- Matchstick Interaction Instruction Pill -->
+                <div id="instruction-pill" class="drag-instruction-pill">
+                    <span class="instruction-icon">👆</span>
+                    <span id="instruction-text">Drag the matchstick to light the Diya</span>
+                </div>
+
+                <!-- Interactive 3D Cartoon Lamp Arena -->
+                <div id="lamp-stage" class="lamp-stage-arena">
+                    
+                    <!-- Ambient Radial Golden Glow behind Diya (expands on ignition) -->
+                    <div id="lamp-ambient-glow" class="lamp-ambient-glow"></div>
+
+                    <!-- Golden Light Shockwave Overlay -->
+                    <div id="golden-light-wave" class="golden-light-wave"></div>
+
+                    <!-- Target Wick Hit Zone for Collision Detection -->
+                    <div id="wick-target" class="wick-hit-zone">
+                        <div class="wick-target-ring" id="wick-ring"></div>
+                    </div>
+
+                    <!-- 3D Cartoon Diya SVG Object -->
+                    <div class="diya-art-wrapper">
+                        <svg class="diya-svg-object" id="diya-svg" viewBox="0 0 260 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <!-- Gradients for 3D Cartoon Depth -->
+                                <radialGradient id="diyaShadow" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#02140b" stop-opacity="0.8"/>
+                                    <stop offset="65%" stop-color="#02140b" stop-opacity="0.3"/>
+                                    <stop offset="100%" stop-color="#02140b" stop-opacity="0"/>
+                                </radialGradient>
+
+                                <!-- Saucer / Base Foot Gradient -->
+                                <linearGradient id="baseGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#ffd54f"/>
+                                    <stop offset="25%" stop-color="#c68615"/>
+                                    <stop offset="70%" stop-color="#7a4900"/>
+                                    <stop offset="100%" stop-color="#4a2600"/>
+                                </linearGradient>
+
+                                <!-- 3D Cartoon Diya Bowl Outer Volume -->
+                                <radialGradient id="bowlVolume" cx="45%" cy="30%" r="70%" fx="35%" fy="20%">
+                                    <stop offset="0%" stop-color="#fff8b3"/>
+                                    <stop offset="18%" stop-color="#ffd700"/>
+                                    <stop offset="50%" stop-color="#d9822b"/>
+                                    <stop offset="80%" stop-color="#a84300"/>
+                                    <stop offset="100%" stop-color="#5c1d00"/>
+                                </radialGradient>
+
+                                <!-- Embossed Rim Gradient -->
+                                <linearGradient id="rimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#fff9c4"/>
+                                    <stop offset="30%" stop-color="#ffd54f"/>
+                                    <stop offset="65%" stop-color="#e68a00"/>
+                                    <stop offset="100%" stop-color="#803800"/>
+                                </linearGradient>
+
+                                <!-- Oil / Ghee Liquid Reservoir -->
+                                <radialGradient id="oilPool" cx="50%" cy="40%" r="55%">
+                                    <stop offset="0%" stop-color="#ffe082"/>
+                                    <stop offset="35%" stop-color="#ff9100"/>
+                                    <stop offset="75%" stop-color="#c65102"/>
+                                    <stop offset="100%" stop-color="#4e1a00"/>
+                                </radialGradient>
+
+                                <!-- Cotton Wick Texture -->
+                                <linearGradient id="wickGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#261b17"/>
+                                    <stop offset="40%" stop-color="#5d4037"/>
+                                    <stop offset="85%" stop-color="#d7ccc8"/>
+                                    <stop offset="100%" stop-color="#efebe9"/>
+                                </linearGradient>
+
+                                <!-- 3D Cartoon Flame Gradients -->
+                                <radialGradient id="flameOuterAura" cx="50%" cy="55%" r="50%">
+                                    <stop offset="0%" stop-color="#ff3d00" stop-opacity="0.95"/>
+                                    <stop offset="55%" stop-color="#ff9100" stop-opacity="0.6"/>
+                                    <stop offset="100%" stop-color="#ffab00" stop-opacity="0"/>
+                                </radialGradient>
+
+                                <linearGradient id="flameBodyGrad" x1="50%" y1="100%" x2="50%" y2="0%">
+                                    <stop offset="0%" stop-color="#ff3d00"/>
+                                    <stop offset="35%" stop-color="#ff9100"/>
+                                    <stop offset="70%" stop-color="#ffd600"/>
+                                    <stop offset="100%" stop-color="#ffff00"/>
+                                </linearGradient>
+
+                                <linearGradient id="flameInnerGrad" x1="50%" y1="100%" x2="50%" y2="0%">
+                                    <stop offset="0%" stop-color="#ff9100"/>
+                                    <stop offset="40%" stop-color="#fff59d"/>
+                                    <stop offset="100%" stop-color="#ffffff"/>
+                                </linearGradient>
+
+                                <!-- Soft Glow Filter for Flame -->
+                                <filter id="softFlameGlow" x="-30%" y="-30%" width="160%" height="160%">
+                                    <feGaussianBlur stdDeviation="6" result="blur"/>
+                                    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+                                </filter>
+
+                                <!-- Specular Pearl Highlight -->
+                                <radialGradient id="pearlShine" cx="35%" cy="35%" r="60%">
+                                    <stop offset="0%" stop-color="#ffffff"/>
+                                    <stop offset="50%" stop-color="#ffd54f"/>
+                                    <stop offset="100%" stop-color="#b26a00"/>
+                                </radialGradient>
+                            </defs>
+
+                            <!-- 1. Ambient Cast Shadow beneath Diya -->
+                            <ellipse cx="130" cy="182" rx="90" ry="14" fill="url(#diyaShadow)" />
+
+                            <!-- 2. Tiered Saucer / Pedestal Foot -->
+                            <path d="M 85 168 Q 130 180 175 168 L 180 176 Q 130 190 80 176 Z" fill="url(#baseGrad)"/>
+                            <ellipse cx="130" cy="168" rx="48" ry="8" fill="#e69500"/>
+                            <ellipse cx="130" cy="166" rx="46" ry="6" fill="#ffd54f"/>
+
+                            <!-- 3. Main 3D Cartoon Diya Bowl Body -->
+                            <!-- Plump rounded bowl with pinched beak spout curving up to the left (coordinates ~75, 115) -->
+                            <path d="
+                                M 65 118
+                                C 55 125, 58 145, 80 162
+                                C 105 178, 155 178, 180 162
+                                C 205 145, 205 125, 195 118
+                                C 180 132, 85 132, 65 118 Z" 
+                                fill="url(#bowlVolume)"/>
+
+                            <!-- 4. Embossed 3D Decorative Pearls around Diya Belly -->
+                            <g class="diya-decorations">
+                                <circle cx="86" cy="148" r="4.5" fill="url(#pearlShine)"/>
+                                <circle cx="102" cy="156" r="5" fill="url(#pearlShine)"/>
+                                <circle cx="120" cy="160" r="5.5" fill="url(#pearlShine)"/>
+                                <circle cx="140" cy="160" r="5.5" fill="url(#pearlShine)"/>
+                                <circle cx="158" cy="156" r="5" fill="url(#pearlShine)"/>
+                                <circle cx="174" cy="148" r="4.5" fill="url(#pearlShine)"/>
+                            </g>
+
+                            <!-- 5. Embossed Rounded Rim & Spout Beak -->
+                            <path d="
+                                M 54 104
+                                C 50 110, 62 120, 75 120
+                                C 105 122, 165 122, 192 118
+                                C 206 114, 206 102, 192 98
+                                C 160 92, 95 94, 66 100
+                                Z"
+                                fill="url(#rimGrad)"
+                                stroke="#fff59d"
+                                stroke-width="1.2"/>
+
+                            <!-- Specular Gleam along Rim Lip -->
+                            <path d="M 68 101 C 95 96, 160 94, 188 99" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" opacity="0.8"/>
+
+                            <!-- 6. Inner Oil Cavity (Translucent Amber Ghee) -->
+                            <ellipse cx="132" cy="108" rx="55" ry="11" fill="url(#oilPool)"/>
+
+                            <!-- Shimmering Golden Ripple in the Oil -->
+                            <ellipse cx="130" cy="107" rx="38" ry="6" fill="#ffe082" opacity="0.35"/>
+
+                            <!-- 7. Cotton Wick resting in Spout -->
+                            <!-- Tilted from oil pool up into the spout beak tip (around 70, 94) -->
+                            <path d="M 90 108 Q 78 104 68 92" stroke="url(#wickGrad)" stroke-width="4.5" stroke-linecap="round"/>
+                            <!-- Burnt Tip of Wick -->
+                            <circle id="wick-tip" cx="68" cy="92" r="2.8" fill="#1b120c"/>
+
+                            <!-- Tiny Ember Glow on Wick Tip (lights up when flame appears) -->
+                            <circle id="wick-ember" cx="68" cy="92" r="3.5" fill="#ff3d00" opacity="0"/>
+
+                            <!-- 8. THE 3D CARTOON FLAME (Layered SVG Artwork) -->
+                            <g id="diya-flame" class="flame-group">
+                                <!-- Outer Radiant Aura -->
+                                <ellipse cx="68" cy="58" rx="22" ry="34" fill="url(#flameOuterAura)" filter="url(#softFlameGlow)" opacity="0.85"/>
+                                
+                                <!-- Main Volumetric Teardrop Flame Body -->
+                                <path d="
+                                    M 68 92
+                                    C 56 86, 46 72, 50 56
+                                    C 54 40, 64 26, 68 18
+                                    C 72 26, 82 40, 86 56
+                                    C 90 72, 80 86, 68 92 Z"
+                                    fill="url(#flameBodyGrad)"
+                                    filter="drop-shadow(0 0 10px rgba(255, 145, 0, 0.8))"/>
+
+                                <!-- Inner Luminous Core -->
+                                <path class="flame-inner-core" d="
+                                    M 68 88
+                                    C 60 84, 54 74, 56 62
+                                    C 58 50, 65 38, 68 30
+                                    C 71 38, 78 50, 80 62
+                                    C 82 74, 76 84, 68 88 Z"
+                                    fill="url(#flameInnerGrad)"/>
+
+                                <!-- Brilliant White Hot Center -->
+                                <ellipse cx="68" cy="72" rx="4.5" ry="10" fill="#ffffff" opacity="0.95"/>
+
+                                <!-- Friendly Blue Root Flame Arc -->
+                                <path d="M 64 92 C 66 90, 70 90, 72 92" stroke="#00e5ff" stroke-width="2.2" stroke-linecap="round" opacity="0.85"/>
+
+                                <!-- Floating Spark / Ember Motes -->
+                                <circle cx="68" cy="14" r="1.5" fill="#ffd700">
+                                    <animate attributeName="cy" values="14;2;14" dur="2s" repeatCount="indefinite"/>
+                                    <animate attributeName="opacity" values="0.9;0.2;0.9" dur="2s" repeatCount="indefinite"/>
+                                </circle>
+                                <circle cx="74" cy="22" r="1.2" fill="#fff59d">
+                                    <animate attributeName="cy" values="22;8;22" dur="2.4s" repeatCount="indefinite"/>
+                                    <animate attributeName="opacity" values="0.8;0.1;0.8" dur="2.4s" repeatCount="indefinite"/>
+                                </circle>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- Draggable 3D Cartoon Matchstick -->
+                    <div id="matchstick" class="matchstick-draggable-item idle">
+                        <svg class="matchstick-svg" viewBox="0 0 110 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <!-- Wood Cylinder Shading -->
+                                <linearGradient id="matchWoodGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#fff4e0"/>
+                                    <stop offset="30%" stop-color="#e8cfb0"/>
+                                    <stop offset="70%" stop-color="#c49e72"/>
+                                    <stop offset="100%" stop-color="#8a6138"/>
+                                </linearGradient>
+
+                                <!-- 3D Cartoon Match Head Gradient -->
+                                <radialGradient id="matchHeadGrad" cx="35%" cy="30%" r="65%">
+                                    <stop offset="0%" stop-color="#ff7961"/>
+                                    <stop offset="35%" stop-color="#e53935"/>
+                                    <stop offset="75%" stop-color="#b71c1c"/>
+                                    <stop offset="100%" stop-color="#5f0909"/>
+                                </radialGradient>
+
+                                <!-- Match Head Glow Aura -->
+                                <filter id="headSparkle" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feGaussianBlur stdDeviation="4" result="sparkleBlur"/>
+                                    <feComposite in="SourceGraphic" in2="sparkleBlur" operator="over"/>
+                                </filter>
+                            </defs>
+
+                            <!-- Matchstick Wood Body (Cylindrical Stick) -->
+                            <rect x="24" y="20" width="80" height="9" rx="4.5" fill="url(#matchWoodGrad)" />
+                            
+                            <!-- Wood Bottom Cap / Cut -->
+                            <ellipse cx="103" cy="24.5" rx="2" ry="4" fill="#a47a4d"/>
+
+                            <!-- Plump 3D Cartoon Red Sulfur Match Head -->
+                            <!-- Centered at x=20, y=24.5 with rounded organic bulb shape -->
+                            <g id="match-head-element">
+                                <!-- Ignition Heat Aura (visible near wick) -->
+                                <ellipse class="match-head-glow" cx="19" cy="24.5" rx="14" ry="14" fill="#ff7043" filter="url(#headSparkle)"/>
+
+                                <!-- Head Bulb -->
+                                <ellipse cx="19" cy="24.5" rx="12" ry="9" fill="url(#matchHeadGrad)"/>
+                                
+                                <!-- Cute 3D Glossy Specular Spot -->
+                                <ellipse cx="15.5" cy="21.5" rx="3.5" ry="2.2" fill="#ffffff" opacity="0.75"/>
+
+                                <!-- Miniature Spark when Striking -->
+                                <g id="match-strike-spark" opacity="0">
+                                    <circle cx="10" cy="24.5" r="4" fill="#ffd700"/>
+                                    <line x1="10" y1="16" x2="10" y2="12" stroke="#ffeb3b" stroke-width="1.8" stroke-linecap="round"/>
+                                    <line x1="10" y1="33" x2="10" y2="37" stroke="#ffeb3b" stroke-width="1.8" stroke-linecap="round"/>
+                                    <line x1="2" y1="24.5" x2="-2" y2="24.5" stroke="#ffeb3b" stroke-width="1.8" stroke-linecap="round"/>
+                                </g>
+                            </g>
+                        </svg>
+                    </div>
+
+                </div>
+
+                <!-- Footer Phrase under Arena -->
+                <p class="arena-footer-note">
+                    Exclusive offer on <span class="highlight">delivery and takeaway</span> orders only.
+                </p>
+
+            </div>
+        </section>
+
+        <!-- ==================== SCREEN 2: CUSTOMER REGISTRATION FORM ==================== -->
+        <section id="screen-form" class="screen-card hidden">
+            <div class="form-ticket-card">
+                <button type="button" class="btn-back" id="btn-back-to-lamp" title="Back to Diya">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    <span>Back to Diya</span>
+                </button>
+                <div class="form-header-bar">
+                    <span class="form-badge-title">Diwali Reward Unlocked</span>
+                    <h2 class="form-headline">CLAIM YOUR OFFER</h2>
+                    <p class="form-subhead">Enter your details to claim and receive your ticket stub</p>
+                </div>
+
+                <div class="form-divider"></div>
+
+                <form id="customer-form" novalidate>
+                    <!-- Full Name -->
+                    <div class="input-group">
+                        <label for="input-name" class="input-label">Full Name</label>
+                        <div class="input-field-wrapper">
+                            <input type="text" id="input-name" class="input-field" placeholder="Enter your full name" required>
+                            <span class="error-message" id="error-name">Please enter your name (min 2 characters)</span>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Number -->
+                    <div class="input-group">
+                        <label for="input-mobile" class="input-label">Mobile Number</label>
+                        <div class="input-field-wrapper">
+                            <input type="tel" id="input-mobile" class="input-field" placeholder="10-digit mobile number" maxlength="10" required>
+                            <span class="error-message" id="error-mobile">Please enter a valid 10-digit mobile number</span>
+                        </div>
+                    </div>
+
+                    <!-- Email Address (Optional) -->
+                    <div class="input-group">
+                        <label for="input-email" class="input-label">Email Address (Optional)</label>
+                        <div class="input-field-wrapper">
+                            <input type="email" id="input-email" class="input-field" placeholder="Email address (optional)">
+                            <span class="error-message" id="error-email">Please enter a valid email address</span>
+                        </div>
+                    </div>
+
+                    <div class="form-divider"></div>
+
+                    <!-- Submit Button with Spinner -->
+                    <button type="submit" id="btn-submit-form" class="form-submit-btn">
+                        <span class="btn-text">CLAIM OFFER 🎁</span>
+                        <div class="form-spinner hidden" id="form-loader"></div>
+                    </button>
+
+                    <p class="form-security-note">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        <span>Your information is secure and private.</span>
+                    </p>
+                </form>
+            </div>
+        </section>
+
+        <!-- ==================== SCREEN 3: SUCCESS CLAIMED TICKET STUB ==================== -->
+        <section id="screen-success" class="screen-card hidden">
+            <div class="ticket-wrapper">
+                <div class="success-badge-icon">🪔</div>
+                <h2 class="success-title">Diwali Offer Successfully Claimed!</h2>
+
+                <div class="ticket-card">
+                    <div class="ticket-header-strip">ARABIAN MAJLIS FESTIVE TICKET</div>
+                    <div class="ticket-body-content">
+                        <div class="ticket-offer-highlight" id="ticket-offer-text">₹50 OFF</div>
+                        
+                        <!-- Instagram Instructions to Redeem -->
+                        <div class="ticket-instagram-instruction" id="ticket-instagram-instruction">
+                            <span class="insta-text-line">Follow us on Instagram</span>
+                            <a href="https://www.instagram.com/arabianmajlis_signature/" target="_blank" rel="noopener noreferrer" class="insta-handle-link">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                <span>@arabianmajlis_signature</span>
+                            </a>
+                            <span class="insta-text-line">to redeem the offer</span>
+                        </div>
+                    </div>
+
+                    <div class="ticket-divider-strip">
+                        <div class="ticket-notch left"></div>
+                        <div class="ticket-notch right"></div>
+                    </div>
+
+                    <div class="ticket-footer-strip" id="ticket-validity-phrase">
+                        GRAB YOUR OFFER - VALID ONLY FOR 10 DAYS!
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== GLOBAL FOOTER & LINKS ==================== -->
+        <footer class="global-footer">
+            <div class="footer-divider">
+                <span class="line"></span>
+                <span class="diamond">◆</span>
+                <span class="line"></span>
+            </div>
+
+            <div class="footer-brand">ARABIAN MAJLIS</div>
+            <div class="footer-locations">
+                <div class="location-pill">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    Koduvally Bus Stand Ln, Koduvally
+                </div>
+                <div class="location-pill">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    Coimbatore
+                </div>
+                <div class="location-pill">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    Perinthalmanna road - Wandoor
+                </div>
+            </div>
+
+            <div class="footer-website">
+                <a href="https://www.arabianmajlislyf.com/" target="_blank" rel="noopener noreferrer" class="footer-link">
+                    www.arabianmajlislyf.com
+                </a>
+            </div>
+
+            <!-- Claim Lookup Link -->
+            <div>
+                <button type="button" id="btn-open-lookup" class="btn-check-claimed">
+                    Already claimed? View your ticket 🔍
+                </button>
+            </div>
+
+            <!-- Link back to Scratch Card experience -->
+            <div>
+                <a href="index.html" class="footer-switch-link">
+                    Classic Scratch Card Experience →
+                </a>
+            </div>
+        </footer>
+
+    </main>
+
+    <!-- ==================== OFFER REVEAL POPUP MODAL ==================== -->
+    <div id="offer-modal" class="offer-modal-backdrop">
+        <div class="offer-modal-card">
+            <div class="modal-content-relative">
+                <span class="modal-diwali-lamp-icon">🪔</span>
+                <p class="modal-diwali-heading">Happy Diwali!</p>
+                <h3 class="modal-diwali-sub">Your Special Surprise is Here!</h3>
+
+                <div class="modal-offer-badge-box">
+                    <p class="modal-offer-label-prefix">Exclusive Festive Reward</p>
+                    <div class="modal-offer-amount" id="modal-offer-text">₹50 OFF</div>
+                    <p class="modal-offer-terms">Exclusive offer on delivery & takeaway</p>
+                </div>
+
+                <button type="button" id="btn-proceed-to-claim" class="btn-claim-festive">
+                    <span>Claim Your Festive Offer</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== CLAIM LOOKUP MODAL DIALOG ==================== -->
+    <div id="modal-claim-lookup" class="lookup-modal-overlay hidden">
+        <div class="lookup-modal-card">
+            <button type="button" id="btn-close-lookup" class="lookup-close-btn" aria-label="Close modal">&times;</button>
+            <h3 style="font-size: 18px; color: #ffd700; margin-bottom: 6px;">Find Your Claimed Offer</h3>
+            <p style="font-size: 12px; color: #dfd8c5; margin-bottom: 16px;">Enter your registered 10-digit mobile number to view your active offer ticket.</p>
+            
+            <form id="form-lookup-claim" novalidate>
+                <div class="input-group">
+                    <label for="input-lookup-mobile" class="input-label">Mobile Number</label>
+                    <div class="input-field-wrapper">
+                        <input type="tel" id="input-lookup-mobile" class="input-field" placeholder="10-digit mobile number" maxlength="10" required>
+                        <span class="error-message" id="error-lookup-mobile">Please enter a valid 10-digit mobile number</span>
+                    </div>
+                </div>
+                <button type="submit" id="btn-submit-lookup" class="form-submit-btn" style="margin-top: 10px;">
+                    <span class="btn-text">Check Claimed Ticket 🔍</span>
+                    <div class="form-spinner hidden" id="lookup-loader"></div>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container"></div>
+
+    <!-- Diwali Client-side Script -->
+    <script src="diwali.js?v=1"></script>
+</body>
+</html>

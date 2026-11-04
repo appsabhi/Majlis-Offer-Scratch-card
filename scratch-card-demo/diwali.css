@@ -1,0 +1,1189 @@
+/* ==========================================================================
+   MAJLIS DIWALI FESTIVE EXPERIENCE - 3D CARTOON LAMP REVEAL
+   ========================================================================== */
+
+:root {
+    --color-green-deep: #073520;
+    --color-green-medium: #0d472d;
+    --color-green-light: #16603f;
+    --color-cream: #faf7f2;
+    --color-cream-dark: #f0ebd8;
+    
+    /* Festive Diwali Gold & Flame Tokens */
+    --color-gold: #c5a059;
+    --color-gold-light: #f5d78e;
+    --color-gold-bright: #ffd700;
+    --color-gold-dark: #9c7b39;
+    --color-amber: #ff9100;
+    --color-orange-glow: #ff5722;
+    --color-flame-inner: #fff9c4;
+    
+    --primary-gradient: linear-gradient(135deg, var(--color-green-deep) 0%, var(--color-green-medium) 100%);
+    --gold-gradient: linear-gradient(135deg, #c5a059 0%, #ffd700 50%, #b8860b 100%);
+    --gold-text-gradient: linear-gradient(135deg, #e6b800 0%, #fff099 50%, #d4af37 100%);
+    --card-surface-gradient: linear-gradient(180deg, rgba(13, 71, 45, 0.95) 0%, rgba(7, 53, 32, 0.98) 100%);
+
+    --text-light: #faf7f2;
+    --text-dark: #1b2e24;
+    --text-muted: #8ca396;
+    
+    --shadow-lamp: 0 16px 40px rgba(0, 0, 0, 0.45);
+    --shadow-lamp-lit: 0 0 70px rgba(255, 179, 0, 0.4), 0 20px 50px rgba(0, 0, 0, 0.5);
+
+    --font-primary: 'Poppins', sans-serif;
+}
+
+/* Base Setup */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    font-family: var(--font-primary);
+    background-color: var(--color-green-deep);
+    color: var(--text-light);
+}
+
+body {
+    background-image: 
+        radial-gradient(circle at 50% 25%, rgba(255, 193, 7, 0.08) 0%, transparent 60%),
+        radial-gradient(circle at 50% 75%, rgba(13, 71, 45, 0.5) 0%, transparent 80%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cpath d='M40 0 L80 40 L40 80 L0 40 Z' fill='none' stroke='rgba(197, 160, 89, 0.04)' stroke-width='1'/%3E%3Cpath d='M40 10 L70 40 L40 70 L10 40 Z' fill='none' stroke='rgba(197, 160, 89, 0.03)' stroke-width='0.5'/%3E%3Ccircle cx='40' cy='40' r='3' fill='none' stroke='rgba(197, 160, 89, 0.05)' stroke-width='1'/%3E%3C/svg%3E");
+    background-attachment: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 16px 12px 32px 12px;
+    position: relative;
+}
+
+/* Watermark Pattern */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("assets/png/Vector Smart Object copy 12.png");
+    background-repeat: space;
+    background-size: 70px 70px;
+    background-position: center;
+    opacity: 0.022;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Main App Wrapper */
+.app-container {
+    width: 100%;
+    max-width: 440px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+/* Header */
+.global-header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0 16px;
+    text-align: center;
+}
+
+.global-logo {
+    max-width: 170px;
+    height: auto;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+}
+
+.diwali-badge-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 4px 14px;
+    background: linear-gradient(135deg, rgba(197, 160, 89, 0.25) 0%, rgba(255, 215, 0, 0.15) 100%);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--color-gold-light);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    animation: gentle-glow 2.5s infinite alternate;
+}
+
+@keyframes gentle-glow {
+    0% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.2); }
+    100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.45); }
+}
+
+/* Screen Cards Architecture */
+.screen-card {
+    width: 100%;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(12px);
+    transition: opacity 0.35s ease, transform 0.35s ease, visibility 0.35s;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+}
+
+.screen-card.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    position: relative;
+    pointer-events: auto;
+}
+
+.screen-card.hidden {
+    display: none;
+}
+
+/* ==========================================================================
+   SCREEN 1: 3D CARTOON DIYA & MATCHSTICK STAGE
+   ========================================================================== */
+
+.diwali-card-outer {
+    background: var(--card-surface-gradient);
+    border: 1.5px solid rgba(255, 215, 0, 0.35);
+    border-radius: 24px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    padding: 24px 18px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Festive Golden Top Corner Accents */
+.diwali-card-outer::before,
+.diwali-card-outer::after {
+    content: "✦";
+    position: absolute;
+    top: 10px;
+    font-size: 14px;
+    color: var(--color-gold);
+    opacity: 0.6;
+}
+.diwali-card-outer::before { left: 14px; }
+.diwali-card-outer::after { right: 14px; }
+
+.campaign-header-block {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.campaign-tagline {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.2px;
+    color: var(--color-gold-light);
+    text-transform: uppercase;
+}
+
+.campaign-headline {
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    line-height: 1.25;
+    margin-top: 4px;
+    background: var(--gold-text-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.campaign-subhead {
+    font-size: 12px;
+    color: #e0d8c3;
+    margin-top: 6px;
+    line-height: 1.4;
+    font-weight: 400;
+}
+
+/* Instruction Prompt Pill */
+.drag-instruction-pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    border-radius: 999px;
+    padding: 7px 18px;
+    margin: 8px 0 16px;
+    color: #fff4d0;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+}
+
+.drag-instruction-pill.near-wick {
+    background: rgba(255, 87, 34, 0.3);
+    border-color: rgba(255, 179, 0, 0.8);
+    color: #ffffff;
+    box-shadow: 0 0 18px rgba(255, 87, 34, 0.5);
+    animation: pulse-near 0.8s infinite alternate;
+}
+
+@keyframes pulse-near {
+    0% { transform: scale(1); }
+    100% { transform: scale(1.04); }
+}
+
+.instruction-icon {
+    font-size: 15px;
+    display: inline-block;
+    animation: tilt-icon 1.8s infinite ease-in-out;
+}
+
+@keyframes tilt-icon {
+    0%, 100% { transform: rotate(-8deg); }
+    50% { transform: rotate(12deg); }
+}
+
+/* ---------------------------------------------------------
+   INTERACTIVE LAMP STAGE (THE ARENA)
+   --------------------------------------------------------- */
+.lamp-stage-arena {
+    width: 100%;
+    max-width: 330px;
+    height: 310px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    margin-bottom: 12px;
+}
+
+/* Ambient Radial Golden Glow behind the Diya */
+.lamp-ambient-glow {
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 193, 7, 0.05) 0%, rgba(255, 152, 0, 0.02) 45%, transparent 70%);
+    pointer-events: none;
+    opacity: 0.5;
+    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transform: scale(0.85);
+}
+
+.lamp-ambient-glow.lit {
+    background: radial-gradient(circle, rgba(255, 215, 0, 0.5) 0%, rgba(255, 140, 0, 0.3) 38%, rgba(230, 81, 0, 0.15) 58%, transparent 75%);
+    opacity: 1;
+    transform: scale(1.22);
+    animation: ambient-flicker 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes ambient-flicker {
+    0% { transform: scale(1.2); opacity: 0.95; }
+    50% { transform: scale(1.25); opacity: 1; filter: drop-shadow(0 0 25px rgba(255, 179, 0, 0.5)); }
+    100% { transform: scale(1.18); opacity: 0.92; }
+}
+
+/* The Diya Visual Container */
+.diya-art-wrapper {
+    position: absolute;
+    bottom: 24px;
+    width: 240px;
+    height: 180px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    pointer-events: none;
+}
+
+.diya-svg-object {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.55));
+    transition: filter 0.6s ease;
+}
+
+.diya-svg-object.lit {
+    filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 35px rgba(255, 179, 0, 0.55));
+}
+
+/* Target Wick Zone for Collision Detection */
+.wick-hit-zone {
+    position: absolute;
+    top: 55%;
+    left: 35%;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform: translate(-50%, -50%);
+}
+
+/* Subtle Target Guide Ring */
+.wick-target-ring {
+    width: 32px;
+    height: 32px;
+    border: 2px dashed rgba(255, 215, 0, 0.45);
+    border-radius: 50%;
+    animation: spin-target 8s linear infinite;
+    transition: all 0.3s ease;
+}
+
+.wick-target-ring.near {
+    border-color: rgba(255, 152, 0, 0.9);
+    border-width: 2.5px;
+    transform: scale(1.2);
+    box-shadow: 0 0 16px rgba(255, 152, 0, 0.7);
+}
+
+.wick-target-ring.lit {
+    display: none;
+}
+
+@keyframes spin-target {
+    100% { transform: rotate(360deg); }
+}
+
+/* ---------------------------------------------------------
+   3D CARTOON FLAME ANIMATION (SVG LAYERS & EFFECTS)
+   --------------------------------------------------------- */
+.flame-group {
+    opacity: 0;
+    transform-origin: 100px 88px;
+    transform: scale(0.1);
+    transition: opacity 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+}
+
+.flame-group.lit {
+    opacity: 1;
+    transform: scale(1);
+    animation: flame-dance 2.2s ease-in-out infinite alternate;
+}
+
+@keyframes flame-dance {
+    0% {
+        transform: scale(1) rotate(-1.5deg) skewX(-1deg);
+    }
+    30% {
+        transform: scale(1.04, 0.97) rotate(2deg) skewX(1.5deg);
+    }
+    70% {
+        transform: scale(0.97, 1.05) rotate(-2deg) skewX(-1.5deg);
+    }
+    100% {
+        transform: scale(1.02, 1.01) rotate(1.5deg) skewX(1deg);
+    }
+}
+
+/* Flame Inner Core Pulse */
+.flame-inner-core {
+    animation: flame-core-pulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes flame-core-pulse {
+    0% { opacity: 0.88; transform: scaleY(0.96); }
+    100% { opacity: 1; transform: scaleY(1.04); }
+}
+
+/* ---------------------------------------------------------
+   DRAGGABLE 3D CARTOON MATCHSTICK
+   --------------------------------------------------------- */
+.matchstick-draggable-item {
+    position: absolute;
+    width: 110px;
+    height: 48px;
+    top: 36px;
+    right: 18px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    transition: transform 0.15s cubic-bezier(0.1, 0.9, 0.2, 1), filter 0.25s ease;
+    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55));
+}
+
+.matchstick-draggable-item:active,
+.matchstick-draggable-item.dragging {
+    cursor: grabbing;
+    filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.7));
+    transition: none; /* Instant tracking on drag */
+}
+
+/* Idle Floating Motion when untouched */
+.matchstick-draggable-item.idle {
+    animation: match-bobbing 3s ease-in-out infinite;
+}
+
+@keyframes match-bobbing {
+    0%, 100% {
+        transform: translateY(0) rotate(-28deg);
+    }
+    50% {
+        transform: translateY(-8px) rotate(-24deg);
+    }
+}
+
+/* Matchstick SVG Construction */
+.matchstick-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+/* Match Head Ignition Glow */
+.match-head-glow {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.matchstick-draggable-item.near .match-head-glow {
+    opacity: 0.9;
+    animation: match-sizzle 0.3s infinite alternate;
+}
+
+@keyframes match-sizzle {
+    0% { transform: scale(1); filter: drop-shadow(0 0 4px #ff5722); }
+    100% { transform: scale(1.2); filter: drop-shadow(0 0 12px #ff9800); }
+}
+
+/* When lit, matchstick dissolves away gracefully */
+.matchstick-draggable-item.lit-away {
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-30px, -40px) rotate(-45deg) scale(0.6) !important;
+    transition: all 0.55s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* ---------------------------------------------------------
+   GOLDEN LIGHT WAVE OVERLAY
+   --------------------------------------------------------- */
+.golden-light-wave {
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    background: radial-gradient(circle at 45% 65%, rgba(255, 215, 0, 0.85) 0%, rgba(255, 152, 0, 0.6) 35%, rgba(7, 53, 32, 0) 75%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 80;
+    transform: scale(0.4);
+    transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.golden-light-wave.spreading {
+    opacity: 1;
+    transform: scale(1.4);
+}
+
+/* Sparkle Canvas for celebratory particles */
+#diwali-sparkle-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* Supporting Tag under Arena */
+.arena-footer-note {
+    text-align: center;
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--color-gold-light);
+    line-height: 1.35;
+}
+
+.arena-footer-note .highlight {
+    color: #ffd700;
+    font-size: 12px;
+}
+
+/* ==========================================================================
+   OFFER REVEAL POPUP MODAL
+   ========================================================================== */
+.offer-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 25, 15, 0.82);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 18px;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s;
+}
+
+.offer-modal-backdrop.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.offer-modal-card {
+    width: 100%;
+    max-width: 380px;
+    background: linear-gradient(165deg, #0d472d 0%, #073520 60%, #041f12 100%);
+    border: 2px solid rgba(255, 215, 0, 0.6);
+    border-radius: 24px;
+    padding: 28px 22px 24px;
+    text-align: center;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 50px rgba(255, 215, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    position: relative;
+    transform: scale(0.82) translateY(20px);
+    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+}
+
+.offer-modal-backdrop.show .offer-modal-card {
+    transform: scale(1) translateY(0);
+}
+
+/* Festive Decorative Sunburst inside modal card */
+.offer-modal-card::before {
+    content: "";
+    position: absolute;
+    inset: -40px;
+    background: radial-gradient(circle at 50% 25%, rgba(255, 215, 0, 0.15) 0%, transparent 65%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.modal-content-relative {
+    position: relative;
+    z-index: 2;
+}
+
+.modal-diwali-lamp-icon {
+    font-size: 34px;
+    line-height: 1;
+    margin-bottom: 8px;
+    display: inline-block;
+    filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.7));
+    animation: icon-float 2s ease-in-out infinite alternate;
+}
+
+@keyframes icon-float {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-5px); }
+}
+
+.modal-diwali-heading {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--color-gold-light);
+}
+
+.modal-diwali-sub {
+    font-size: 18px;
+    font-weight: 700;
+    margin-top: 2px;
+    color: #ffffff;
+    letter-spacing: 0.3px;
+}
+
+/* Hero Reward Badge Container */
+.modal-offer-badge-box {
+    margin: 18px 0 14px;
+    padding: 16px 14px;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.12) 0%, rgba(255, 140, 0, 0.08) 100%);
+    border: 1.5px solid rgba(255, 215, 0, 0.5);
+    border-radius: 18px;
+    box-shadow: inset 0 0 25px rgba(255, 215, 0, 0.12), 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-offer-label-prefix {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--color-gold-light);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.modal-offer-amount {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.25;
+    background: linear-gradient(135deg, #ffffff 0%, #ffd700 50%, #ffaa00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 4px 18px rgba(255, 179, 0, 0.45);
+    margin: 4px 0;
+}
+
+.modal-offer-terms {
+    font-size: 11px;
+    color: #dfd8c5;
+    margin-top: 4px;
+}
+
+/* Primary CTA Button */
+.btn-claim-festive {
+    width: 100%;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #ffd700 0%, #ff9800 100%);
+    color: #1b2e24;
+    font-family: var(--font-primary);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(255, 152, 0, 0.45), 0 2px 0 #b36b00;
+    transition: all 0.25s ease;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.btn-claim-festive:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(255, 152, 0, 0.6), 0 3px 0 #b36b00;
+}
+
+.btn-claim-festive:active {
+    transform: translateY(1px);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
+
+/* ==========================================================================
+   SCREEN 2: REGISTRATION FORM STYLING
+   ========================================================================== */
+.form-ticket-card {
+    width: 100%;
+    background: var(--card-surface-gradient);
+    border: 1.5px solid rgba(255, 215, 0, 0.35);
+    border-radius: 24px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    position: relative;
+    padding: 24px 20px;
+}
+
+.btn-back {
+    align-self: flex-start;
+    background: rgba(197, 160, 89, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    color: var(--color-gold-light);
+    font-size: 11px;
+    font-family: var(--font-primary);
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 14px;
+    transition: all 0.2s ease;
+}
+
+.btn-back:hover {
+    background: rgba(197, 160, 89, 0.3);
+    color: #ffffff;
+}
+
+.form-header-bar {
+    text-align: center;
+    margin-bottom: 18px;
+}
+
+.form-badge-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--color-gold-light);
+}
+
+.form-headline {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-top: 4px;
+}
+
+.form-subhead {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.form-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 215, 0, 0.25) 50%, transparent 100%);
+    margin: 16px 0;
+}
+
+.input-group {
+    margin-bottom: 14px;
+    text-align: left;
+}
+
+.input-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #eae5d8;
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+}
+
+.input-field-wrapper {
+    position: relative;
+}
+
+.input-field {
+    width: 100%;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1.5px solid rgba(197, 160, 89, 0.35);
+    border-radius: 12px;
+    font-family: var(--font-primary);
+    font-size: 14px;
+    color: #ffffff;
+    transition: all 0.25s ease;
+}
+
+.input-field:focus {
+    border-color: #ffd700;
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
+}
+
+.input-field.invalid {
+    border-color: #ef5350;
+    background: rgba(239, 83, 80, 0.08);
+}
+
+.error-message {
+    display: none;
+    color: #ef5350;
+    font-size: 11px;
+    margin-top: 4px;
+    padding-left: 2px;
+}
+
+.input-field.invalid + .error-message {
+    display: block;
+}
+
+.form-submit-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #ffd700 0%, #ff9800 100%);
+    color: #1b2e24;
+    font-family: var(--font-primary);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(255, 152, 0, 0.4);
+    transition: all 0.25s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.form-submit-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Spinner Loader */
+.form-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(27, 46, 36, 0.3);
+    border-top-color: #1b2e24;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.form-security-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+/* ==========================================================================
+   SCREEN 3: SUCCESS CLAIMED TICKET
+   ========================================================================== */
+.ticket-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.success-badge-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(255, 152, 0, 0.2) 100%);
+    border: 2px solid #ffd700;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+    margin-bottom: 12px;
+    animation: icon-float 2.5s infinite alternate ease-in-out;
+}
+
+.success-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.ticket-card {
+    width: 100%;
+    background: #faf7f2;
+    color: #1b2e24;
+    border-radius: 18px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(197, 160, 89, 0.5);
+}
+
+.ticket-header-strip {
+    background: linear-gradient(135deg, #073520 0%, #0d472d 100%);
+    color: var(--color-gold-light);
+    padding: 10px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-align: center;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.ticket-body-content {
+    padding: 22px 18px;
+    text-align: center;
+}
+
+.ticket-offer-highlight {
+    font-size: 24px;
+    font-weight: 800;
+    color: #073520;
+    line-height: 1.25;
+}
+
+/* Instagram Redemption Instructions */
+.ticket-instagram-instruction {
+    margin-top: 16px;
+    padding: 12px;
+    background: #f0ebd8;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.insta-text-line {
+    font-size: 11px;
+    color: #536c60;
+    font-weight: 500;
+}
+
+.insta-handle-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #b8235a;
+    font-weight: 700;
+    font-size: 13px;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.insta-handle-link:hover {
+    opacity: 0.85;
+}
+
+.ticket-divider-strip {
+    height: 16px;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.ticket-divider-strip::before {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    height: 1.5px;
+    background-image: linear-gradient(to right, #c5a059 40%, rgba(255, 255, 255, 0) 0%);
+    background-position: bottom;
+    background-size: 8px 1.5px;
+    background-repeat: repeat-x;
+}
+
+.ticket-notch {
+    width: 20px;
+    height: 20px;
+    background: var(--color-green-deep);
+    border-radius: 50%;
+    position: absolute;
+    top: -2px;
+    z-index: 2;
+}
+
+.ticket-notch.left { left: -10px; }
+.ticket-notch.right { right: -10px; }
+
+.ticket-footer-strip {
+    padding: 14px 16px;
+    text-align: center;
+    background: #f5f0e3;
+    font-size: 11px;
+    font-weight: 700;
+    color: #073520;
+}
+
+/* ==========================================================================
+   GLOBAL FOOTER & CLAIM LOOKUP MODAL
+   ========================================================================== */
+.global-footer {
+    width: 100%;
+    margin-top: 28px;
+    text-align: center;
+    padding-top: 14px;
+}
+
+.footer-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    opacity: 0.4;
+}
+
+.footer-divider .line {
+    width: 60px;
+    height: 1px;
+    background: var(--color-gold);
+}
+
+.footer-divider .diamond {
+    color: var(--color-gold);
+    font-size: 10px;
+}
+
+.footer-brand {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--color-gold-light);
+    margin-bottom: 8px;
+}
+
+.footer-locations {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    padding: 0 8px;
+}
+
+.location-pill {
+    background: rgba(13, 71, 45, 0.6);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    border-radius: 12px;
+    padding: 3px 8px;
+    font-size: 9px;
+    color: #e0eedf;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.footer-website {
+    margin-bottom: 8px;
+}
+
+.footer-link {
+    color: var(--color-gold-light);
+    font-size: 11px;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+}
+
+.footer-link:hover {
+    text-decoration: underline;
+    color: #ffd700;
+}
+
+.footer-switch-link {
+    display: inline-block;
+    color: #dfd8c5;
+    font-size: 12px;
+    text-decoration: underline;
+    margin-top: 6px;
+    transition: color 0.2s ease;
+}
+
+.footer-switch-link:hover {
+    color: #ffd700;
+}
+
+.btn-check-claimed {
+    background: none;
+    border: none;
+    color: var(--color-gold-light);
+    font-size: 12px;
+    text-decoration: underline;
+    cursor: pointer;
+    margin-top: 10px;
+    font-family: var(--font-primary);
+}
+
+/* Claim Lookup Modal */
+.lookup-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 25, 15, 0.85);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 18px;
+    z-index: 10001;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+.lookup-modal-overlay:not(.hidden) {
+    opacity: 1;
+    visibility: visible;
+}
+
+.lookup-modal-card {
+    width: 100%;
+    max-width: 360px;
+    background: #0d472d;
+    border: 1.5px solid rgba(255, 215, 0, 0.5);
+    border-radius: 20px;
+    padding: 24px 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    position: relative;
+    text-align: center;
+}
+
+.lookup-close-btn {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* Toast Container */
+#toast-container {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99999;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 90%;
+    max-width: 360px;
+}
+
+.toast {
+    background: rgba(13, 71, 45, 0.95);
+    border: 1px solid rgba(255, 215, 0, 0.5);
+    color: #faf7f2;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Reduced Motion Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
