@@ -11,8 +11,6 @@
         ? "http://127.0.0.1:5000/api/claims" 
         : "/api/claims";
 
-    const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyXm_94jLRyCPccQQ2bYxB6DjPveIW2Mh9YZ6dFIiHHfkJsKTHck2U8o1V2S41mDISssA/exec";
-
     // ==========================================================================
     // REWARD POOL (Mirrored faithfully from existing Majlis campaign pool)
     // ==========================================================================
@@ -94,15 +92,41 @@
     function getLitStorageKey() {
         return `majlis_diwali_lit_${visitorId}`;
     }
-    function getClaimedStorageKey() {
+    function getLegacyClaimedStorageKey() {
         return `majlis_campaign_claimed_${visitorId}`;
     }
-    function getClaimedAtStorageKey() {
+    function getClaimedStorageKey(
+        offerId = sessionReward && sessionReward.id,
+        mobileNumber = safeStorage.getItem("majlis_claimed_mobile")
+    ) {
+        return window.MajlisClaimState.offerClaimedKey(mobileNumber, offerId);
+    }
+    function getLegacyClaimedAtStorageKey() {
         return `majlis_campaign_claimed_at_${visitorId}`;
     }
+    function getClaimedAtStorageKey(
+        offerId = sessionReward && sessionReward.id,
+        mobileNumber = safeStorage.getItem("majlis_claimed_mobile")
+    ) {
+        return window.MajlisClaimState.offerClaimedAtKey(mobileNumber, offerId);
+    }
 
-    function isClaimedState() {
-        return safeStorage.getItem(getClaimedStorageKey()) === "true";
+    function isClaimedState(offerId = sessionReward && sessionReward.id) {
+        if (!offerId) return false;
+        const mobileNumber = safeStorage.getItem("majlis_claimed_mobile");
+        if (!mobileNumber) return false;
+        const claimKey = window.MajlisClaimState.offerClaimedKey(mobileNumber, offerId);
+        if (claimKey && safeStorage.getItem(claimKey) === "true") return true;
+
+        const savedRewardId = safeStorage.getItem(getRewardStorageKey());
+        if (savedRewardId === offerId && safeStorage.getItem(getLegacyClaimedStorageKey()) === "true") {
+            if (claimKey) safeStorage.setItem(claimKey, "true");
+            const legacyClaimedAt = safeStorage.getItem(getLegacyClaimedAtStorageKey());
+            const claimAtKey = getClaimedAtStorageKey(offerId, mobileNumber);
+            if (legacyClaimedAt && claimAtKey) safeStorage.setItem(claimAtKey, legacyClaimedAt);
+            return true;
+        }
+        return false;
     }
 
     function isDiyaLitState() {
@@ -140,7 +164,7 @@
             const savedRewardCoupon = safeStorage.getItem(getRewardCouponStorageKey());
 
             if (savedRewardId) {
-                if (isClaimedState()) {
+                if (isClaimedState(savedRewardId)) {
                     if (LEGACY_REWARD_MAP[savedRewardId]) {
                         sessionReward = LEGACY_REWARD_MAP[savedRewardId];
                         return;
@@ -236,6 +260,8 @@
         const inputLookupMobile = document.getElementById("input-lookup-mobile");
         const errorLookupMobile = document.getElementById("error-lookup-mobile");
         const lookupLoader = document.getElementById("lookup-loader");
+        const claimedTicketList = document.getElementById("claimed-ticket-list");
+        const lookupClaimResults = document.getElementById("lookup-claim-results");
 
         // --- Sparkle Canvas Engine ---
         const sparkleCanvas = document.getElementById("diwali-sparkle-canvas");
@@ -394,8 +420,11 @@
             if (!claimData || !claimData.offer) return false;
 
             const dbOfferLabel = formatDbOfferLabel(claimData.offer);
+            const claimOfferId = claimData.offerId
+                || window.MajlisClaimState.inferLegacyOfferId(claimData.offer)
+                || "claimed_db";
             sessionReward = {
-                id: "claimed_db",
+                id: claimOfferId,
                 label: dbOfferLabel,
                 coupon: null,
                 isWinner: true
@@ -412,9 +441,14 @@
             if (claimData.mobileNumber) {
                 safeStorage.setItem("majlis_claimed_mobile", String(claimData.mobileNumber).trim());
             }
-            safeStorage.setItem(getClaimedStorageKey(), "true");
-            safeStorage.setItem(getRewardLabelStorageKey(), dbOfferLabel);
-            safeStorage.setItem(getClaimedAtStorageKey(), claimTimestamp.toString());
+            if (claimOfferId !== "claimed_db") {
+                const claimKey = window.MajlisClaimState.offerClaimedKey(claimData.mobileNumber, claimOfferId);
+                const claimAtKey = window.MajlisClaimState.offerClaimedAtKey(claimData.mobileNumber, claimOfferId);
+                if (claimKey && claimAtKey) {
+                    safeStorage.setItem(claimKey, "true");
+                    safeStorage.setItem(claimAtKey, claimTimestamp.toString());
+                }
+            }
             safeStorage.setItem(getLitStorageKey(), "true");
 
             applyRewardToDOM();
@@ -434,16 +468,34 @@
             return fetchWithTimeout(url, { method: "GET" }, 15000)
                 .then(res => res.json())
                 .then(data => {
-                    if (data && data.success && data.claimed && data.claim) {
-                        handleDbClaimedOffer(data.claim, "Found your claimed Diwali ticket!");
-                        return true;
-                    } else if (data && data.success && !data.claimed) {
-                        showToast("No claimed offer found for this mobile number.");
-                        return false;
-                    } else {
-                        throw new Error(data && data.error ? data.error : "Failed to fetch claim status.");
-                    }
+                    if (data && data.success) return window.MajlisClaimState.claimsFromResponse(data);
+                    throw new Error(data && data.error ? data.error : "Failed to fetch claim status.");
                 });
+        }
+
+        function showClaimedTickets(claims, containers, activateFirst) {
+            containers.forEach(container => {
+                if (!container) return;
+                container.replaceChildren();
+                if (claims.length < 2) return;
+
+                claims.forEach((claim, index) => {
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.className = "claimed-ticket-option";
+                    const claimDate = claim.claimDateTime ? ` — ${String(claim.claimDateTime)}` : "";
+                    button.textContent = `${formatDbOfferLabel(claim.offer)} — Ticket ${index + 1}${claimDate}`;
+                    button.addEventListener("click", () => {
+                        handleDbClaimedOffer(claim);
+                        if (modalLookup) modalLookup.classList.add("hidden");
+                    });
+                    container.appendChild(button);
+                });
+            });
+
+            if (activateFirst && claims.length) {
+                handleDbClaimedOffer(claims[0]);
+            }
         }
 
         // ==========================================================================
@@ -773,6 +825,7 @@
                     mobileNumber: mobileVal,
                     email: emailValFinal,
                     offer: offerVal,
+                    offerId: sessionReward ? sessionReward.id : "",
                     couponCode: couponVal,
                     coupon: couponVal,
                     claimDateTime: formattedClaimDateTime,
@@ -783,6 +836,7 @@
                     "Mobile Number": mobileVal,
                     "Email": emailValFinal,
                     "Offer": offerVal,
+                    "Offer ID": sessionReward ? sessionReward.id : "",
                     "Coupon Code": couponVal,
                     "Claim Date & Time": formattedClaimDateTime
                 };
@@ -801,19 +855,16 @@
                 })
                 .then(data => {
                     if (data && data.success) {
-                        // Background Google Sheets Backup
-                        if (GOOGLE_SHEETS_API_URL && GOOGLE_SHEETS_API_URL.startsWith("http") && !GOOGLE_SHEETS_API_URL.includes("PASTE_YOUR")) {
-                            fetchWithTimeout(GOOGLE_SHEETS_API_URL, {
-                                method: "POST",
-                                body: JSON.stringify(claimPayload)
-                            }, 15000).catch(err => console.warn("[Google Sheets Backup]", err));
-                        }
-
                         // Save claimed state
                         safeStorage.setItem("majlis_claimed_mobile", mobileVal);
-                        safeStorage.setItem(getClaimedStorageKey(), "true");
-                        safeStorage.setItem(getClaimedAtStorageKey(), Date.now().toString());
-                        safeStorage.setItem(getRewardLabelStorageKey(), offerVal);
+                        if (sessionReward) {
+                            const claimKey = window.MajlisClaimState.offerClaimedKey(mobileVal, sessionReward.id);
+                            const claimAtKey = window.MajlisClaimState.offerClaimedAtKey(mobileVal, sessionReward.id);
+                            if (claimKey && claimAtKey) {
+                                safeStorage.setItem(claimKey, "true");
+                                safeStorage.setItem(claimAtKey, Date.now().toString());
+                            }
+                        }
 
                         applyRewardToDOM();
                         showScreen(screenSuccess);
@@ -853,6 +904,7 @@
         if (btnOpenLookup && modalLookup) {
             btnOpenLookup.addEventListener("click", () => {
                 modalLookup.classList.remove("hidden");
+                if (lookupClaimResults) lookupClaimResults.replaceChildren();
                 if (inputLookupMobile) inputLookupMobile.focus();
             });
         }
@@ -888,10 +940,17 @@
                 if (lookupLoader) lookupLoader.classList.remove("hidden");
 
                 fetchClaimByMobile(mobile)
-                    .then(found => {
-                        if (found && modalLookup) {
-                            modalLookup.classList.add("hidden");
+                    .then(claims => {
+                        if (!claims.length) {
+                            showToast("No claimed offer found for this mobile number.");
+                            return;
                         }
+                        showClaimedTickets(claims, [lookupClaimResults, claimedTicketList], claims.length === 1);
+                        if (claims.length === 1 && modalLookup) modalLookup.classList.add("hidden");
+                    })
+                    .catch(err => {
+                        console.error("[Diwali Lookup Error]", err);
+                        showToast("Failed to fetch claimed offers. Please try again.");
                     })
                     .finally(() => {
                         if (lookupLoader) lookupLoader.classList.add("hidden");
@@ -904,12 +963,18 @@
         // ==========================================================================
         const savedClaimedMobile = safeStorage.getItem("majlis_claimed_mobile");
 
-        if (savedClaimedMobile || isClaimedState()) {
+        if (isClaimedState()) {
             console.log("[Majlis Diwali] Returning customer with claimed ticket. Showing ticket stub.");
             showScreen(screenSuccess);
 
             if (savedClaimedMobile) {
-                fetchClaimByMobile(savedClaimedMobile).catch(err => {
+                fetchClaimByMobile(savedClaimedMobile).then(claims => {
+                    showClaimedTickets(claims, [claimedTicketList], false);
+                    const currentClaim = claims.find(claim =>
+                        (claim.offerId || window.MajlisClaimState.inferLegacyOfferId(claim.offer)) === sessionReward.id
+                    );
+                    if (currentClaim) handleDbClaimedOffer(currentClaim);
+                }).catch(err => {
                     console.warn("[Majlis Diwali] Syncing DB claim background notice:", err);
                 });
             }

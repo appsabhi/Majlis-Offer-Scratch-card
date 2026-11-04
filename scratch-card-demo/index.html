@@ -358,6 +358,7 @@
                         <p class="card-supporting-phrase" id="ticket-validity-phrase">GRAB YOUR OFFER - VALID ONLY FOR 10 DAYS!</p>
                     </div>
                 </div>
+                <div id="claimed-ticket-list" class="claimed-ticket-list" aria-live="polite"></div>
 
             </div>
             <div class="festive-decor-bottom"></div>
@@ -436,6 +437,7 @@
                     <div class="loader hidden" id="lookup-loader"></div>
                 </button>
             </form>
+            <div id="lookup-claim-results" class="claimed-ticket-list" aria-live="polite"></div>
         </div>
     </div>
 
@@ -444,7 +446,8 @@
 
 
     <!-- Client-side script -->
-    <script src="script.js?v=5"></script>
+    <script src="shared/claim-state.js?v=1"></script>
+    <script src="script.js?v=6"></script>
 </body>
 
 </html>

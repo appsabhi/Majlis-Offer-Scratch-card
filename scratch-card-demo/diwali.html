@@ -412,6 +412,7 @@
                         GRAB YOUR OFFER - VALID ONLY FOR 10 DAYS!
                     </div>
                 </div>
+                <div id="claimed-ticket-list" class="claimed-ticket-list" aria-live="polite"></div>
             </div>
         </section>
 
@@ -507,6 +508,7 @@
                     <div class="form-spinner hidden" id="lookup-loader"></div>
                 </button>
             </form>
+            <div id="lookup-claim-results" class="claimed-ticket-list" aria-live="polite"></div>
         </div>
     </div>
 
@@ -514,6 +516,7 @@
     <div id="toast-container"></div>
 
     <!-- Diwali Client-side Script -->
-    <script src="diwali.js?v=1"></script>
+    <script src="shared/claim-state.js?v=1"></script>
+    <script src="diwali.js?v=2"></script>
 </body>
 </html>

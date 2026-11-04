@@ -6,8 +6,6 @@
 const BACKEND_API_URL = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') 
     ? "http://127.0.0.1:5000/api/claims" 
     : "/api/claims";
-// Copy the Web App URL from your deployed Google Apps Script and paste it below (optional backup):
-const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbyXm_94jLRyCPccQQ2bYxB6DjPveIW2Mh9YZ6dFIiHHfkJsKTHck2U8o1V2S41mDISssA/exec";
 // ==========================================================================
 // REWARD POOL CONFIGURATION
 // Add, remove, or edit offers here. Each entry must have:
@@ -21,7 +19,7 @@ const REWARD_POOL = [
     // { id: "offer100Rs",         label: `₹100 OFF <br> on bill above ₹999`,  coupon: "OFF100", isWinner: true },
     // { id: "offer150Rs",         label: `₹150 OFF <br> on bill above ₹1299`, coupon: "OFF150", isWinner: true },
     // { id: "offer5PercentNext",  label: `5% OFF <br> on next purchase`,       coupon: "NEXT5",  isWinner: true },
-    { id: "offer10PercentNext", label: `5% OFF <br> on delivery orders`,      coupon: "NEXT10", isWinner: true }
+    { id: "delivery_5_percent_orders_v1", label: `5% OFF <br> on delivery orders`, coupon: "NEXT10", isWinner: true }
 ];
 
 // Legacy reward map to ensure users who previously claimed old campaign offers keep their exact claimed reward when returning
@@ -112,25 +110,54 @@ function getRevealedStorageKey() {
 }
 
 /**
- * Helper to get the claimed storage key for the current visitor.
+ * Offer-specific claimed state, with the old visitor-level key retained for migration reads.
  */
-function getClaimedStorageKey() {
+function getLegacyClaimedStorageKey() {
     return `majlis_campaign_claimed_${visitorId || "fallback"}`;
 }
 
-/**
- * Helper to get the claimed timestamp storage key for the current visitor.
- */
-function getClaimedAtStorageKey() {
+function getClaimedStorageKey(
+    offerId = sessionReward && sessionReward.id,
+    mobileNumber = safeStorage.getItem("majlis_claimed_mobile")
+) {
+    return window.MajlisClaimState.offerClaimedKey(mobileNumber, offerId);
+}
+
+function getLegacyClaimedAtStorageKey() {
     return `majlis_campaign_claimed_at_${visitorId || "fallback"}`;
+}
+
+function getClaimedAtStorageKey(
+    offerId = sessionReward && sessionReward.id,
+    mobileNumber = safeStorage.getItem("majlis_claimed_mobile")
+) {
+    return window.MajlisClaimState.offerClaimedAtKey(mobileNumber, offerId);
 }
 
 /**
  * Checks whether the visitor has successfully claimed their reward.
  */
-function isClaimedState() {
+function isClaimedState(offerId = sessionReward && sessionReward.id) {
+    if (!offerId) return false;
     try {
-        return safeStorage.getItem(getClaimedStorageKey()) === "true";
+        const mobileNumber = safeStorage.getItem("majlis_claimed_mobile");
+        if (!mobileNumber) return false;
+        const claimKey = window.MajlisClaimState.offerClaimedKey(mobileNumber, offerId);
+        if (claimKey && safeStorage.getItem(claimKey) === "true") return true;
+
+        const savedRewardId = safeStorage.getItem(getRewardStorageKey());
+        const savedRewardLabel = safeStorage.getItem(getRewardLabelStorageKey());
+        const assignedOfferId = window.MajlisClaimState.resolveClassicRewardId(savedRewardId, savedRewardLabel);
+        const wasLegacyClaimed = safeStorage.getItem(getLegacyClaimedStorageKey()) === "true";
+        if (claimKey && wasLegacyClaimed && assignedOfferId === offerId) {
+            safeStorage.setItem(claimKey, "true");
+            const legacyClaimedAt = safeStorage.getItem(getLegacyClaimedAtStorageKey());
+            if (legacyClaimedAt) {
+                safeStorage.setItem(getClaimedAtStorageKey(offerId, mobileNumber), legacyClaimedAt);
+            }
+            return true;
+        }
+        return false;
     } catch (e) {
         console.warn("[Majlis] Error reading claimed state:", e);
         return false;
@@ -142,7 +169,9 @@ function isClaimedState() {
  */
 function isOfferExpired() {
     try {
-        const claimedAtStr = safeStorage.getItem(getClaimedAtStorageKey());
+        const claimedAtKey = getClaimedAtStorageKey();
+        if (!claimedAtKey) return false;
+        const claimedAtStr = safeStorage.getItem(claimedAtKey);
         if (!claimedAtStr) return false;
         const claimedAt = Number(claimedAtStr);
         if (isNaN(claimedAt) || claimedAt <= 0) return false;
@@ -225,21 +254,28 @@ function updateExpiryUI() {
 /**
  * Persists the successfully claimed state and claim timestamp for the visitor.
  */
-function setClaimedState(mobileNumber) {
+function setClaimedState(mobileNumber, offerId = sessionReward && sessionReward.id) {
     try {
         const now = Date.now();
+        if (!offerId) return;
         if (mobileNumber) {
             safeStorage.setItem("majlis_claimed_mobile", String(mobileNumber).trim());
         }
-        safeStorage.setItem(getClaimedStorageKey(), "true");
+        const claimKey = window.MajlisClaimState.offerClaimedKey(mobileNumber, offerId);
+        if (!claimKey) return;
+        safeStorage.setItem(claimKey, "true");
         if (sessionReward) {
-            safeStorage.setItem(getRewardLabelStorageKey(), sessionReward.label);
-            if (sessionReward.coupon) {
-                safeStorage.setItem(getRewardCouponStorageKey(), sessionReward.coupon);
+            if (sessionReward.id === offerId) {
+                safeStorage.setItem(getRewardStorageKey(), offerId);
+                safeStorage.setItem(getRewardLabelStorageKey(), sessionReward.label);
+                if (sessionReward.coupon) {
+                    safeStorage.setItem(getRewardCouponStorageKey(), sessionReward.coupon);
+                }
             }
         }
-        if (!safeStorage.getItem(getClaimedAtStorageKey())) {
-            safeStorage.setItem(getClaimedAtStorageKey(), now.toString());
+        const claimAtKey = getClaimedAtStorageKey(offerId, mobileNumber);
+        if (!safeStorage.getItem(claimAtKey)) {
+            safeStorage.setItem(claimAtKey, now.toString());
         }
         console.log("[Majlis] Persisted claimed success state for visitor:", visitorId, "| Claimed at:", new Date(now).toLocaleString());
     } catch (e) {
@@ -255,12 +291,24 @@ function clearLocalState() {
 
     try {
         if (visitorId) {
+            const assignedRewardId = window.MajlisClaimState.resolveClassicRewardId(
+                safeStorage.getItem(getRewardStorageKey()),
+                safeStorage.getItem(getRewardLabelStorageKey())
+            );
             safeStorage.removeItem(getRewardStorageKey());
             safeStorage.removeItem(getRewardLabelStorageKey());
             safeStorage.removeItem(getRewardCouponStorageKey());
             safeStorage.removeItem(getRevealedStorageKey());
-            safeStorage.removeItem(getClaimedStorageKey());
-            safeStorage.removeItem(getClaimedAtStorageKey());
+            const assignedClaimKey = getClaimedStorageKey(assignedRewardId);
+            const assignedClaimAtKey = getClaimedAtStorageKey(assignedRewardId);
+            const currentClaimKey = getClaimedStorageKey(sessionReward && sessionReward.id);
+            const currentClaimAtKey = getClaimedAtStorageKey(sessionReward && sessionReward.id);
+            if (assignedClaimKey) safeStorage.removeItem(assignedClaimKey);
+            if (assignedClaimAtKey) safeStorage.removeItem(assignedClaimAtKey);
+            if (currentClaimKey) safeStorage.removeItem(currentClaimKey);
+            if (currentClaimAtKey) safeStorage.removeItem(currentClaimAtKey);
+            safeStorage.removeItem(getLegacyClaimedStorageKey());
+            safeStorage.removeItem(getLegacyClaimedAtStorageKey());
             safeStorage.removeItem("majlis_claimed_mobile");
             console.log("[Majlis] Cleared local campaign state for visitor:", visitorId);
         }
@@ -292,13 +340,18 @@ function initializeReward() {
 
     // 2. Resolve existing reward or pick a new one for this visitor
     try {
-        const savedRewardId = safeStorage.getItem(getRewardStorageKey());
+        let savedRewardId = safeStorage.getItem(getRewardStorageKey());
         const savedRewardLabel = safeStorage.getItem(getRewardLabelStorageKey());
         const savedRewardCoupon = safeStorage.getItem(getRewardCouponStorageKey());
 
         if (savedRewardId) {
+            const resolvedRewardId = window.MajlisClaimState.resolveClassicRewardId(savedRewardId, savedRewardLabel);
+            if (resolvedRewardId !== savedRewardId) {
+                savedRewardId = resolvedRewardId;
+                safeStorage.setItem(getRewardStorageKey(), savedRewardId);
+            }
             // A. If user has ALREADY claimed their reward, preserve what they claimed
-            if (isClaimedState()) {
+            if (isClaimedState(savedRewardId)) {
                 if (LEGACY_REWARD_MAP[savedRewardId]) {
                     sessionReward = LEGACY_REWARD_MAP[savedRewardId];
                     console.log("[Majlis] Restored claimed legacy reward for visitor:", sessionReward.label);
@@ -1290,26 +1343,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const mobileValFinal = inputMobile.value.trim();
         const emailValFinal = emailVal !== "" ? emailVal : "Not Provided";
 
-        // Claim Payload: Exactly matched keys & fallbacks for PostgreSQL Backend & Google Sheets backup
+        // Submit the canonical claim fields to PostgreSQL.
         const claimPayload = {
             fullName: nameVal,
             mobileNumber: mobileValFinal,
             email: emailValFinal,
             offer: offerVal,
-            couponCode: couponVal,
-            coupon: couponVal,
-            claimDateTime: formattedClaimDateTime,
-
-            // Fallback aliases for maximum server script compatibility
-            name: nameVal,
-            mobile: mobileValFinal,
-            phone: mobileValFinal,
-            "Full Name": nameVal,
-            "Mobile Number": mobileValFinal,
-            "Email": emailValFinal,
-            "Offer": offerVal,
-            "Coupon Code": couponVal,
-            "Claim Date & Time": formattedClaimDateTime
+            offerId: sessionReward ? sessionReward.id : "",
+            claimDateTime: formattedClaimDateTime
         };
 
         // Primary API submission to PostgreSQL Backend
@@ -1328,16 +1369,8 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(data => {
             if (data && data.success) {
-                // Background backup post to Google Sheets (if configured)
-                if (GOOGLE_SHEETS_API_URL && GOOGLE_SHEETS_API_URL.startsWith("http") && !GOOGLE_SHEETS_API_URL.includes("PASTE_YOUR")) {
-                    fetchWithTimeout(GOOGLE_SHEETS_API_URL, {
-                        method: "POST",
-                        body: JSON.stringify(claimPayload)
-                    }, 15000).catch(e => console.warn("[Google Sheets Backup Error]", e));
-                }
-
                 // Persist successfully claimed state & show success ticket screen
-                setClaimedState(mobileValFinal);
+                setClaimedState(mobileValFinal, sessionReward && sessionReward.id);
                 showScreen(screenSuccess);
                 triggerConfetti();
             } else if (data && data.error === "ALREADY_CLAIMED") {
@@ -1471,9 +1504,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!claimData || !claimData.offer) return false;
 
         const dbOfferLabel = formatDbOfferLabel(claimData.offer);
-        
+        const claimOfferId = claimData.offerId
+            || window.MajlisClaimState.inferLegacyOfferId(claimData.offer)
+            || "claimed_db";
         sessionReward = {
-            id: "claimed_db",
+            id: claimOfferId,
             label: dbOfferLabel,
             coupon: null,
             isWinner: true
@@ -1492,9 +1527,14 @@ document.addEventListener("DOMContentLoaded", () => {
         if (claimData.mobileNumber) {
             safeStorage.setItem("majlis_claimed_mobile", String(claimData.mobileNumber).trim());
         }
-        safeStorage.setItem(getClaimedStorageKey(), "true");
-        safeStorage.setItem(getRewardLabelStorageKey(), dbOfferLabel);
-        safeStorage.setItem(getClaimedAtStorageKey(), claimTimestamp.toString());
+        if (claimOfferId !== "claimed_db") {
+            const claimKey = window.MajlisClaimState.offerClaimedKey(claimData.mobileNumber, claimOfferId);
+            const claimAtKey = window.MajlisClaimState.offerClaimedAtKey(claimData.mobileNumber, claimOfferId);
+            if (claimKey && claimAtKey) {
+                safeStorage.setItem(claimKey, "true");
+                safeStorage.setItem(claimAtKey, claimTimestamp.toString());
+            }
+        }
 
         // Apply reward label to DOM elements and show success ticket
         applyRewardToDOM();
@@ -1514,16 +1554,37 @@ document.addEventListener("DOMContentLoaded", () => {
         return fetchWithTimeout(url, { method: "GET" }, 15000)
             .then(res => res.json())
             .then(data => {
-                if (data && data.success && data.claimed && data.claim) {
-                    handleDbClaimedOffer(data.claim, "Found your claimed offer ticket!");
-                    return true;
-                } else if (data && data.success && !data.claimed) {
-                    showToast("No claimed offer found for this mobile number.");
-                    return false;
-                } else {
-                    throw new Error(data && data.error ? data.error : "Failed to fetch claim status.");
-                }
+                if (data && data.success) return window.MajlisClaimState.claimsFromResponse(data);
+                throw new Error(data && data.error ? data.error : "Failed to fetch claim status.");
             });
+    }
+
+    const claimedTicketList = document.getElementById("claimed-ticket-list");
+    const lookupClaimResults = document.getElementById("lookup-claim-results");
+
+    function showClaimedTickets(claims, containers, activateFirst) {
+        containers.forEach(container => {
+            if (!container) return;
+            container.replaceChildren();
+            if (claims.length < 2) return;
+
+            claims.forEach((claim, index) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "claimed-ticket-option";
+                const claimDate = claim.claimDateTime ? ` — ${String(claim.claimDateTime)}` : "";
+                button.textContent = `${formatDbOfferLabel(claim.offer)} — Ticket ${index + 1}${claimDate}`;
+                button.addEventListener("click", () => {
+                    handleDbClaimedOffer(claim);
+                    if (modalLookup) modalLookup.classList.add("hidden");
+                });
+                container.appendChild(button);
+            });
+        });
+
+        if (activateFirst && claims.length) {
+            handleDbClaimedOffer(claims[0]);
+        }
     }
 
     // --- Claimed Offer Lookup Modal Handlers ---
@@ -1539,6 +1600,7 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.addEventListener("click", () => {
             if (modalLookup) {
                 modalLookup.classList.remove("hidden");
+                if (lookupClaimResults) lookupClaimResults.replaceChildren();
                 if (inputLookupMobile) {
                     inputLookupMobile.value = "";
                     inputLookupMobile.classList.remove("invalid");
@@ -1575,10 +1637,13 @@ document.addEventListener("DOMContentLoaded", () => {
             if (lookupLoader) lookupLoader.classList.remove("hidden");
 
             fetchClaimByMobile(mobileVal)
-                .then(found => {
-                    if (found && modalLookup) {
-                        modalLookup.classList.add("hidden");
+                .then(claims => {
+                    if (!claims.length) {
+                        showToast("No claimed offer found for this mobile number.");
+                        return;
                     }
+                    showClaimedTickets(claims, [lookupClaimResults, claimedTicketList], claims.length === 1);
+                    if (claims.length === 1 && modalLookup) modalLookup.classList.add("hidden");
                 })
                 .catch(err => {
                     console.error("[Lookup Error]", err);
@@ -1698,13 +1763,18 @@ document.addEventListener("DOMContentLoaded", () => {
     // Step 3: Determine correct start screen based on claimed status & sync DB claim
     const savedClaimedMobile = safeStorage.getItem("majlis_claimed_mobile");
 
-    if (savedClaimedMobile || isClaimedState()) {
+    if (isClaimedState()) {
         console.log("[Majlis] Visitor has already claimed their reward. Displaying Success screen directly.");
         showScreen(screenSuccess);
 
         if (savedClaimedMobile) {
-            console.log("[Majlis] Found saved claimed mobile number. Syncing latest claim from DB in background:", savedClaimedMobile);
-            fetchClaimByMobile(savedClaimedMobile).catch(err => {
+            fetchClaimByMobile(savedClaimedMobile).then(claims => {
+                showClaimedTickets(claims, [claimedTicketList], false);
+                const currentClaim = claims.find(claim =>
+                    (claim.offerId || window.MajlisClaimState.inferLegacyOfferId(claim.offer)) === sessionReward.id
+                );
+                if (currentClaim) handleDbClaimedOffer(currentClaim);
+            }).catch(err => {
                 console.warn("[Majlis] Failed to sync claim from DB, displaying local state:", err);
             });
         }
