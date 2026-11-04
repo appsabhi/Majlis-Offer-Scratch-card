@@ -497,7 +497,7 @@ body::before {
     margin: 6px auto 12px auto;
     position: relative;
     border-radius: 14px;
-    overflow: hidden;
+    overflow: visible;
     background: transparent;
     border: none;
     box-shadow: none;
@@ -1934,7 +1934,7 @@ body::before {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow: visible;
     border-radius: 10px;
     touch-action: none;
     user-select: none;
@@ -1987,7 +1987,12 @@ body::before {
 /* Ignition flash effect */
 .ignition-flash {
     position: absolute;
-    inset: 0;
+    top: 42%;
+    left: 49%;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
     background: radial-gradient(circle at 49% 42%, rgba(255, 255, 240, 0.96) 0%, rgba(255, 210, 80, 0.65) 30%, transparent 70%);
     opacity: 0;
     pointer-events: none;
