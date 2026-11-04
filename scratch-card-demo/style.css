@@ -2567,9 +2567,8 @@ body::before {
     text-align: center;
 }
 
-.card-offer-support strong {
+.card-offer-support .offer-highlight {
     color: var(--color-gold-dark);
-    font-weight: 700;
 }
 
 .diwali-instruction-container {
@@ -2626,8 +2625,8 @@ body::before {
 }
 
 .draggable-floating-flame {
-    position: fixed;
-    top: max(72px, calc(env(safe-area-inset-top) + 72px));
+    position: absolute;
+    top: 14px;
     right: 14px;
     left: auto;
     width: 70px;
@@ -2859,4 +2858,33 @@ body::before {
 
 #screen-form .form-ticket-card {
     margin: 0 auto;
+}
+
+.dev-reset-button {
+    position: fixed;
+    top: max(10px, calc(env(safe-area-inset-top) + 10px));
+    left: 12px;
+    z-index: 10001;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 84px;
+    min-height: 36px;
+    padding: 7px 10px;
+    border: 1px solid rgba(223, 200, 150, 0.7);
+    border-radius: 6px;
+    background: rgba(7, 53, 32, 0.94);
+    color: #ead7a5;
+    font: 700 11px/1 var(--font-primary, 'Poppins', sans-serif);
+    letter-spacing: 0.7px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
+}
+
+.dev-reset-button[hidden] {
+    display: none !important;
+}
+
+.dev-reset-button:hover {
+    background: #0d472d;
 }

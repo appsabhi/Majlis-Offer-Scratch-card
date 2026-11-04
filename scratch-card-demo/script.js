@@ -38,6 +38,10 @@ let sessionReward = null;
 
 const DEV_MODE = window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost';
 
+function isLocalDevResetAllowed() {
+    return DEV_MODE && (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost');
+}
+
 const VISITOR_KEY = "majlis_visitor_id";
 
 // Safe Storage Helper with memory fallback for iOS Safari / Mobile Firefox Private Browsing
@@ -247,6 +251,8 @@ function setClaimedState(mobileNumber) {
  * Clears local campaign state for the current visitor (used for dev reset).
  */
 function clearLocalState() {
+    if (!isLocalDevResetAllowed()) return false;
+
     try {
         if (visitorId) {
             safeStorage.removeItem(getRewardStorageKey());
@@ -255,12 +261,14 @@ function clearLocalState() {
             safeStorage.removeItem(getRevealedStorageKey());
             safeStorage.removeItem(getClaimedStorageKey());
             safeStorage.removeItem(getClaimedAtStorageKey());
+            safeStorage.removeItem("majlis_claimed_mobile");
             console.log("[Majlis] Cleared local campaign state for visitor:", visitorId);
         }
     } catch (e) {
         console.warn("[Majlis] Error clearing campaign state:", e);
     }
     sessionReward = null;
+    return true;
 }
 
 /**
@@ -442,8 +450,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- Buttons & Action Elements ---
     const btnRestart = document.getElementById("btn-restart");
+    const btnDevReset = document.getElementById("btn-dev-reset");
     const btnCopyCode = document.getElementById("btn-copy-code");
     const copyText = document.getElementById("copy-text");
+
+    // The reset control is exposed only on the app's existing localhost dev mode.
+    if (btnDevReset) {
+        if (isLocalDevResetAllowed()) {
+            document.body.appendChild(btnDevReset);
+            btnDevReset.hidden = false;
+            btnDevReset.addEventListener("click", () => {
+                if (!isLocalDevResetAllowed()) return;
+                if (!window.confirm("Reset this local Diwali scratch-card test session?")) return;
+                if (clearLocalState()) window.location.reload();
+            });
+        } else {
+            btnDevReset.remove();
+        }
+    }
     
     // --- Congratulations Step Elements ---
     const btnClaimOffer = document.getElementById("btn-claim-offer");
@@ -487,9 +511,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const diwaliInstructionArea = document.getElementById("diwali-instruction-area");
     const diwaliInstructionPill = document.getElementById("diwali-instruction-pill");
     const diwaliInstructionText = document.getElementById("diwali-instruction-text");
-
-    // Keep the flame in the viewport layer so it can travel over the card and page.
-    if (floatingFlame && document.body) document.body.appendChild(floatingFlame);
 
     // --- State Variables ---
     let isDrawing = false;
@@ -670,11 +691,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const flameRect = floatingFlame.getBoundingClientRect();
         const originX = flameRect.left - flameCurrentX;
         const originY = flameRect.top - flameCurrentY;
-        const viewportHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        const minX = -originX;
-        const maxX = Math.max(minX, window.innerWidth - originX - floatingFlame.offsetWidth);
-        const minY = -originY;
-        const maxY = Math.max(minY, viewportHeight - originY - floatingFlame.offsetHeight);
+        const stageRect = lampStage ? lampStage.getBoundingClientRect() : null;
+        if (!stageRect) return;
+        const minX = stageRect.left - originX;
+        const maxX = Math.max(minX, stageRect.right - originX - floatingFlame.offsetWidth);
+        const minY = stageRect.top - originY;
+        const maxY = Math.max(minY, stageRect.bottom - originY - floatingFlame.offsetHeight);
 
         flameCurrentX = Math.min(maxX, Math.max(minX, e.clientX - flameDragStartX));
         flameCurrentY = Math.min(maxY, Math.max(minY, e.clientY - flameDragStartY));
