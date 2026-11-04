@@ -12,6 +12,7 @@
     --color-gold: #c5a059;
     --color-gold-light: #dfc896;
     --color-gold-dark: #9c7b39;
+    --diya-stage-background: radial-gradient(circle at 50% 60%, rgba(255, 245, 230, 0.6) 0%, rgba(250, 247, 242, 0.95) 75%);
     
     --primary-gradient: linear-gradient(135deg, var(--color-green-deep) 0%, var(--color-green-medium) 100%);
     --gold-gradient: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-light) 50%, var(--color-gold) 100%);
@@ -99,7 +100,8 @@ body::before {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-top: 4px;
+    margin-top: clamp(12px, 2vh, 22px);
+    margin-top: clamp(12px, 2svh, 22px);
     margin-bottom: 8px;
     padding: 0 16px;
     gap: 6px;
@@ -398,12 +400,13 @@ body::before {
 }
 
 .scratch-card-outer {
-    background: var(--white);
+    background: var(--diya-stage-background);
     border: 1px solid var(--festive-gold);
     border-radius: 18px;
     width: 100%;
     max-width: 380px;
     height: auto;
+    min-height: clamp(560px, 62svh, 660px);
     margin: 0 auto 16px auto;
     box-shadow: var(--shadow-soft);
     position: relative;
@@ -417,7 +420,7 @@ body::before {
 
 .scratch-card-header {
     background: var(--gold-gradient);
-    color: var(--color-green-deep);
+    color: #06452F;
     font-family: var(--font-heading);
     font-size: 10.5px;
     font-weight: 800;
@@ -437,6 +440,7 @@ body::before {
     width: 100%;
     box-sizing: border-box;
     min-width: 0;
+    background: transparent;
 }
 
 .card-supporting-phrase {
@@ -466,7 +470,7 @@ body::before {
     font-family: var(--font-heading);
     font-size: clamp(15px, 4.5vw, 18px);
     font-weight: 700;
-    color: var(--color-green-deep);
+    color: #06452F;
     text-align: center;
     letter-spacing: 1px;
     margin-bottom: 4px;
@@ -494,9 +498,9 @@ body::before {
     position: relative;
     border-radius: 14px;
     overflow: hidden;
-    background: var(--color-green-deep);
-    border: 1px solid var(--color-gold);
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+    background: transparent;
+    border: none;
+    box-shadow: none;
     box-sizing: border-box;
 }
 
@@ -507,10 +511,7 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: var(--color-cream);
-    background-image: 
-        radial-gradient(circle at 0% 50%, transparent 8px, var(--color-cream-dark) 9px, transparent 10px),
-        radial-gradient(circle at 100% 50%, transparent 8px, var(--color-cream-dark) 9px, transparent 10px);
+    background: transparent;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -524,7 +525,7 @@ body::before {
 }
 
 .offer-badge {
-    background: var(--color-green-deep);
+    background: transparent;
     color: var(--color-gold-light);
     font-size: 8px;
     font-weight: 700;
@@ -1938,7 +1939,7 @@ body::before {
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
-    background: radial-gradient(circle at 50% 60%, rgba(255, 245, 230, 0.6) 0%, rgba(250, 247, 242, 0.95) 75%);
+    background: transparent;
     z-index: 2;
 }
 
@@ -2559,7 +2560,7 @@ body::before {
     width: 100%;
     max-width: 300px;
     margin: 16px auto 0;
-    color: var(--color-green-deep);
+    color: #06452F;
     font-size: 14px;
     font-weight: 600;
     line-height: 1.6;
@@ -2568,7 +2569,7 @@ body::before {
 }
 
 .card-offer-support .offer-highlight {
-    color: var(--color-gold-dark);
+    color: #A36F16;
 }
 
 .diwali-instruction-container {
@@ -2607,7 +2608,7 @@ body::before {
 }
 
 .diwali-instruction-pill.highlight .instruction-pill-text {
-    color: var(--color-gold-dark);
+    color: #06452F;
 }
 
 .instruction-flame-icon {
@@ -2617,7 +2618,7 @@ body::before {
 }
 
 .instruction-pill-text {
-    color: var(--color-green-deep);
+    color: #06452F;
     font-size: 14.5px;
     line-height: 1.5;
     letter-spacing: 0.15px;
@@ -2699,8 +2700,12 @@ body::before {
        sizing rules; intrinsic content can still make it taller. */
     .scratch-card-outer {
         height: auto;
-        min-height: clamp(570px, calc(45vh + 210px + 0.4vw), 680px);
-        min-height: clamp(570px, calc(45svh + 210px + 0.4vw), 680px);
+        min-height: clamp(590px, calc(47vh + 225px + 0.4vw), 700px);
+        min-height: clamp(590px, calc(47svh + 225px + 0.4vw), 700px);
+    }
+
+    .global-header {
+        margin-top: clamp(12px, 2svh, 18px);
     }
 
     body {
