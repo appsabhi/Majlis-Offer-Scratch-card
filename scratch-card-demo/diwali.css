@@ -1036,28 +1036,7 @@ body::before {
     font-weight: 600;
     letter-spacing: 2px;
     color: var(--color-gold-light);
-    margin-bottom: 8px;
-}
-
-.footer-locations {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
-    margin-bottom: 10px;
-    padding: 0 8px;
-}
-
-.location-pill {
-    background: rgba(13, 71, 45, 0.6);
-    border: 1px solid rgba(255, 215, 0, 0.25);
-    border-radius: 12px;
-    padding: 3px 8px;
-    font-size: 9px;
-    color: #e0eedf;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
+    margin-bottom: 12px;
 }
 
 .footer-website {
